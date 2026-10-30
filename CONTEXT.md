@@ -27,3 +27,7 @@ _Avoid_: Sincronización, backup
 **Tablero de ejemplo**:
 El Tablero con el que se encuentra quien llega por primera vez; sus Pendientes enseñan a usar la app.
 _Avoid_: Plantilla, tutorial, demo
+
+**Vaciar**:
+Quitar todos los Pendientes del Tablero de una vez, conservando sus Etapas.
+_Avoid_: Reiniciar, resetear, limpiar

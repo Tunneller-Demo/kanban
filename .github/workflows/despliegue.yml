@@ -1,0 +1,36 @@
+name: Despliegue
+
+on:
+  push:
+    branches: [main]
+
+concurrency: despliegue
+
+permissions:
+  contents: write
+
+jobs:
+  pruebas:
+    uses: ./.github/workflows/pruebas.yml
+
+  publicar:
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: touch dist/.nojekyll
+      - uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
+        with:
+          folder: dist
+          branch: gh-pages
+          clean-exclude: pr-preview/
+          # Sin esto, un push forzado borraría las previews que se publiquen a la vez.
+          force: false

@@ -2,17 +2,17 @@ import { useId } from 'react'
 import type { Etapa as DatosEtapa } from '@/modelo/tablero'
 
 export function Etapa({ etapa }: { etapa: DatosEtapa }) {
-  const encabezado = useId()
+  const idEncabezado = useId()
   const total = etapa.pendientes.length
 
   return (
     <section
-      aria-labelledby={encabezado}
-      className="flex min-w-0 flex-col rounded-[10px] bg-muted p-2.5 min-[720px]:w-70 min-[720px]:flex-none"
+      aria-labelledby={idEncabezado}
+      className="flex min-w-0 flex-col rounded-[10px] bg-muted p-2.5 carriles:w-70 carriles:flex-none"
     >
       <header className="flex items-center gap-2">
         <h2
-          id={encabezado}
+          id={idEncabezado}
           className="min-w-0 flex-1 text-[13px] font-semibold tracking-[.06em] wrap-anywhere text-muted-foreground uppercase"
         >
           {etapa.nombre}

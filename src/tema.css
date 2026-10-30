@@ -22,13 +22,18 @@
   --border: #30364a; /* Solo separadores decorativos */
   --input: #737b96; /* Bordes de campos y controles */
 
-  --ring: #c6f24e;
-  --ring-sobre-primary: #e9ecf4;
+  --ring: var(--primary);
+  --ring-sobre-primary: var(--foreground);
 }
+
+/* Sin tema claro: `dark:` siempre aplica, sea cual sea la preferencia del sistema. */
+@custom-variant dark (&);
 
 @theme inline {
   --font-sans: 'Space Grotesk Variable', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --breakpoint-carriles: 720px; /* Desde aquí las Etapas van en fila */
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -50,6 +55,10 @@
 }
 
 @layer base {
+  * {
+    border-color: var(--border);
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }

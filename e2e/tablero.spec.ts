@@ -23,22 +23,18 @@ test('carga todo bajo su ruta base, sin terceros ni errores', async ({ page, bas
   const peticiones: string[] = []
   const fallidas: string[] = []
   // El favicon llega con los metadatos; hasta entonces algunos navegadores lo piden en la raíz.
-  const esFavicon = (url: string) => url.endsWith('/favicon.ico')
-  page.on('request', (peticion) => {
-    if (!esFavicon(peticion.url())) peticiones.push(peticion.url())
-  })
-  page.on('requestfailed', (peticion) => {
-    if (!esFavicon(peticion.url())) fallidas.push(peticion.url())
-  })
+  const sinFavicon = (urls: string[]) => urls.filter((url) => !url.endsWith('/favicon.ico'))
+  page.on('request', (peticion) => peticiones.push(peticion.url()))
+  page.on('requestfailed', (peticion) => fallidas.push(peticion.url()))
   page.on('response', (respuesta) => {
-    if (!esFavicon(respuesta.url()) && respuesta.status() >= 400) fallidas.push(respuesta.url())
+    if (respuesta.status() >= 400) fallidas.push(respuesta.url())
   })
 
   await page.goto('/kanban/', { waitUntil: 'networkidle' })
 
   expect(peticiones.length).toBeGreaterThan(1)
-  expect(peticiones.filter((url) => !url.startsWith(`${baseURL}/kanban/`))).toEqual([])
-  expect(fallidas).toEqual([])
+  expect(sinFavicon(peticiones).filter((url) => !url.startsWith(`${baseURL}/kanban/`))).toEqual([])
+  expect(sinFavicon(fallidas)).toEqual([])
 })
 
 test('usa las fuentes empaquetadas', async ({ page }) => {
@@ -61,6 +57,7 @@ test('se ve con Panel nocturno', async ({ page }) => {
   const nombre = etapa.getByRole('heading')
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(17, 19, 25)')
   await expect(etapa).toHaveCSS('background-color', 'rgb(24, 27, 36)')
+  await expect(etapa).toHaveCSS('border-top-color', 'rgb(48, 54, 74)')
   await expect(nombre).toHaveCSS('text-transform', 'uppercase')
   await expect(nombre).toHaveCSS('font-size', '13px')
   await expect(etapa.getByText('0', { exact: false })).toHaveCSS('font-family', /IBM Plex Mono/)

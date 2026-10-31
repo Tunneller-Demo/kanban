@@ -18,6 +18,7 @@
   --accent-foreground: #e9ecf4;
   --primary: #c6f24e; /* Acento lima */
   --primary-foreground: #111319;
+  --destructive: #ff6b6b;
 
   --border: #30364a; /* Solo separadores decorativos */
   --input: #737b96; /* Bordes de campos y controles */
@@ -49,6 +50,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

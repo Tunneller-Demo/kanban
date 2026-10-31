@@ -1,9 +1,31 @@
-import { useId } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Etapa as DatosEtapa } from '@/modelo/tablero'
+import { CampoDePendiente } from './CampoDePendiente'
+import { Pendiente } from './Pendiente'
 
-export function Etapa({ etapa }: { etapa: DatosEtapa }) {
+type Props = {
+  etapa: DatosEtapa
+  onCrear: (titulo: string) => boolean
+}
+
+export function Etapa({ etapa, onCrear }: Props) {
   const idEncabezado = useId()
   const total = etapa.pendientes.length
+  const botonCrear = useRef<HTMLButtonElement>(null)
+  const devolverFoco = useRef(false)
+  const [creando, setCreando] = useState(false)
+
+  // El botón no existe hasta que el campo se cierra.
+  useEffect(() => {
+    if (creando || !devolverFoco.current) return
+    devolverFoco.current = false
+    botonCrear.current?.focus()
+  }, [creando])
+
+  function cerrarCampo(conFoco: boolean) {
+    devolverFoco.current = conFoco
+    setCreando(false)
+  }
 
   return (
     <section
@@ -22,6 +44,26 @@ export function Etapa({ etapa }: { etapa: DatosEtapa }) {
           <span className="sr-only"> {total === 1 ? 'Pendiente' : 'Pendientes'}</span>
         </span>
       </header>
+      {creando ? (
+        <CampoDePendiente nombreDeEtapa={etapa.nombre} onCrear={onCrear} onCerrar={cerrarCampo} />
+      ) : (
+        <button
+          ref={botonCrear}
+          type="button"
+          onClick={() => setCreando(true)}
+          aria-label={`Añadir Pendiente a ${etapa.nombre}`}
+          className="mt-2 min-h-11 rounded-md px-2.5 text-left text-sm text-muted-foreground hover:bg-card hover:text-foreground carriles:min-h-8"
+        >
+          <span aria-hidden>+ </span>Añadir Pendiente
+        </button>
+      )}
+      {total > 0 && (
+        <ol aria-labelledby={idEncabezado} className="mt-2 flex flex-col gap-1.5">
+          {etapa.pendientes.map((pendiente) => (
+            <Pendiente key={pendiente.id} pendiente={pendiente} />
+          ))}
+        </ol>
+      )}
     </section>
   )
 }

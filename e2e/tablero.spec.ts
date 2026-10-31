@@ -65,7 +65,7 @@ test('se ve con Panel nocturno', async ({ page }) => {
 
 test('marca el foco con el contorno del tema', async ({ page }) => {
   await page.goto('/kanban/')
-  // Este corte aún no tiene controles: el campo se añade para ver cómo se pinta el foco.
+  // Aún no hay controles lima: los campos se añaden para ver cómo se pinta el foco.
   await page.evaluate(() => {
     for (const clase of ['normal', 'bg-primary']) {
       const campo = document.createElement('input')

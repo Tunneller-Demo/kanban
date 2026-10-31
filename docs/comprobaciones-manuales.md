@@ -37,17 +37,27 @@ El selector de archivos y la carpeta de descargas son del sistema: las pruebas l
 
 ## Lector de pantalla
 
-Por definir.
+Las pruebas comprueban los textos; si se oyen bien, y en su momento, solo se sabe escuchándolos.
 
-- [ ] NVDA en Windows
-- [ ] TalkBack en Android
+| Comprobación                                                                         | NVDA en Windows | TalkBack en Android |
+| ------------------------------------------------------------------------------------ | --------------- | ------------------- |
+| Al llegar a un Pendiente se oye su título; al llegar a una Etapa, su nombre          | [ ]             | [ ]                 |
+| Coger, mover y soltar un Pendiente se oye en español, con títulos y posiciones       | [ ]             | [ ]                 |
+| Mover desde el menú «⋮» se oye una sola vez, y el foco sigue al Pendiente            | [ ]             | [ ]                 |
+| Al abrir un diálogo se oye su título; al cerrarlo, el Pendiente que tenía el foco    | [ ]             | [ ]                 |
+| Borrar un Pendiente anuncia «Deshacer» y el foco no se pierde                        | [ ]             | [ ]                 |
+| Nunca se oye un identificador ni un texto en inglés                                  | [ ]             | [ ]                 |
 
 ## Zoom y ancho
 
-Por definir.
+Las pruebas simulan el zoom con una ventana de 640 × 400; aquí se usa el zoom del navegador.
 
-- [ ] Zoom al 200 %
-- [ ] Ancho de 320 px
+| Comprobación                                                                   | Zoom al 200 % | Ancho de 320 px |
+| ------------------------------------------------------------------------------ | ------------- | --------------- |
+| La página no se desplaza de lado; solo el carrusel y las pestañas              | [ ]           | [ ]             |
+| Se llega a todas las Etapas y sus Pendientes                                   | [ ]           | [ ]             |
+| Los diálogos caben, y sus botones se alcanzan desplazando su contenido         | [ ]           | [ ]             |
+| El contorno de foco se ve entero al recorrer la página con Tab                 | [ ]           | [ ]             |
 
 ## Pasadas
 

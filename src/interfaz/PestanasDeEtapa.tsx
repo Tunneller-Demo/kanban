@@ -63,6 +63,9 @@ export function PestanasDeEtapa({ etapas, carrusel }: Props) {
               type="button"
               aria-current={posicion === activa ? 'true' : undefined}
               onClick={() => irA(posicion)}
+              onFocus={({ currentTarget }) =>
+                currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+              }
               className={cn(
                 'flex min-h-11 max-w-[60vw] items-center gap-1.5 rounded-md px-2.5 text-[13px]',
                 posicion === activa

@@ -20,7 +20,7 @@ export function DialogContent({
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60" />
       <DialogPrimitive.Content
         className={cn(
-          'fixed inset-2 z-50 flex flex-col gap-4 overflow-y-auto rounded-[10px] border bg-popover p-4 text-popover-foreground shadow-lg',
+          'fixed inset-2 z-50 flex scroll-py-1 flex-col gap-4 overflow-y-auto rounded-[10px] border border-input bg-popover p-4 text-popover-foreground shadow-lg',
           'carriles:inset-auto carriles:top-1/2 carriles:left-1/2 carriles:max-h-[calc(100dvh-2rem)] carriles:w-full carriles:max-w-lg carriles:-translate-x-1/2 carriles:-translate-y-1/2',
           className,
         )}

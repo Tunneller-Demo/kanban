@@ -17,7 +17,7 @@ export function DropdownMenuContent({
         sideOffset={4}
         collisionPadding={8}
         className={cn(
-          'z-50 max-h-(--radix-dropdown-menu-content-available-height) w-56 max-w-(--radix-dropdown-menu-content-available-width) overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground shadow-lg',
+          'z-50 max-h-(--radix-dropdown-menu-content-available-height) w-56 max-w-(--radix-dropdown-menu-content-available-width) scroll-py-1 overflow-y-auto rounded-md border border-input bg-popover p-1 text-popover-foreground shadow-lg',
           className,
         )}
         {...props}

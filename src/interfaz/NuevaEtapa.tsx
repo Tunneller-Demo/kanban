@@ -34,7 +34,8 @@ export function NuevaEtapa({ llena, onCrear }: Props) {
   }
 
   return (
-    <div className="flex w-[85vw] flex-none snap-center snap-always flex-col carriles:w-70">
+    // Alineado con el encabezado de las Etapas; pegado a `main`, su contorno de foco se recortaría.
+    <div className="flex w-[85vw] flex-none snap-center snap-always flex-col pt-2.5 carriles:w-70">
       {creando ? (
         <CampoDeNombre
           etiqueta="Nombre de la nueva Etapa"

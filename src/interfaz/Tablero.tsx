@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, type FocusEvent } from 'react'
 import { AYUDA_DE_ARRASTRE, AYUDA_DE_ASA, AYUDA_DE_NOMBRE } from '@/anuncios/anuncios'
 import { ZonaDeArrastre } from '@/arrastre/arrastre'
 import type { Foco } from '@/estado/useEstadoDeLaApp'
@@ -67,6 +67,18 @@ export function Tablero({
     contenedor.current?.querySelector<HTMLElement>(selector)?.focus()
   }, [foco])
 
+  // `Firefox` no respeta `scroll-py-1` al enfocar: aquí sí, y el contorno no se recorta.
+  // Además, el navegador da por visible lo que asoma por el borde: sin el carril, el foco se
+  // quedaría en la Etapa vecina. El carril va antes: si es más alto que `main`, desharía lo otro.
+  function alEnfocar({ target }: FocusEvent<HTMLElement>) {
+    const cerca = { block: 'nearest', inline: 'nearest' } as const
+    const carriles = contenedor.current?.children ?? []
+    Array.from(carriles)
+      .find((hijo) => hijo.contains(target))
+      ?.scrollIntoView(cerca)
+    target.scrollIntoView(cerca)
+  }
+
   return (
     <ZonaDeArrastre
       tablero={tablero}
@@ -85,12 +97,14 @@ export function Tablero({
           {/* Sin encajar: al coger una Etapa, WebKit saltaba a la siguiente. */}
           <main
             ref={carrusel}
-            className="relative flex min-h-0 flex-1 snap-x snap-mandatory flex-col overflow-auto not-has-data-dnd-dragging:max-carriles:motion-safe:scroll-smooth has-data-dnd-dragging:snap-none max-carriles:overscroll-x-contain carriles:snap-none"
+            onFocus={alEnfocar}
+            className="relative flex min-h-0 flex-1 snap-x snap-mandatory flex-col overflow-auto carriles:scroll-px-1 not-has-data-dnd-dragging:max-carriles:motion-safe:scroll-smooth has-data-dnd-dragging:snap-none max-carriles:overscroll-x-contain carriles:snap-none"
           >
             {/* `w-max`: sin él, el margen final no cuenta y la última no se centraría. */}
+            {/* `min-h-48`: en ventanas bajas, deja sitio en la lista para un Pendiente entero. */}
             <div
               ref={contenedor}
-              className="flex min-h-0 flex-1 gap-2.5 px-[7.5vw] pb-4 max-carriles:w-max carriles:px-6"
+              className="flex min-h-48 flex-1 gap-2.5 px-[7.5vw] pb-4 max-carriles:w-max carriles:px-6"
             >
               <p id={idAyuda} hidden>
                 {AYUDA_DE_ARRASTRE}

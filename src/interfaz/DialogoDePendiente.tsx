@@ -178,8 +178,14 @@ type PropsDeOpcion = {
 }
 
 function OpcionDeEtiqueta({ nombre, rotulo, marcada, onElegir, children }: PropsDeOpcion) {
+  // El radio escondido es diminuto: al enfocarlo, el navegador solo trae a la vista ese punto.
   return (
-    <label className="relative grid size-11 cursor-pointer place-items-center rounded-md border border-transparent hover:bg-muted has-checked:border-primary has-checked:bg-muted has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring carriles:size-8">
+    <label
+      onFocus={({ currentTarget }) =>
+        currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      }
+      className="relative grid size-11 cursor-pointer place-items-center rounded-md border border-transparent hover:bg-muted has-checked:border-primary has-checked:bg-muted has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring carriles:size-8"
+    >
       <input
         type="radio"
         name={nombre}

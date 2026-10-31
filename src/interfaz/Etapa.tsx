@@ -123,10 +123,11 @@ export function Etapa({
       )}
       {total > 0 && (
         // El relleno deja sitio al contorno de foco, que el desplazamiento recortaría.
+        // `scroll-py-1` guarda ese sitio también al desplazar hasta el foco.
         // Solo contiene en vertical: si no, deslizar de lado no llega al carrusel.
         <ol
           aria-labelledby={idEncabezado}
-          className="-mx-1 mt-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-y-contain p-1"
+          className="-mx-1 mt-1 flex min-h-0 flex-1 scroll-py-1 flex-col gap-1.5 overflow-y-auto overscroll-y-contain p-1"
         >
           {etapa.pendientes.map((pendiente, indice) => (
             <Pendiente

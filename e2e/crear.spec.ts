@@ -159,19 +159,6 @@ test('guarda bajo una clave con el nombre de la app y la ruta base', async ({ pa
   expect(claves).toEqual(['tablero-de-pendientes:/kanban/'])
 })
 
-test('no sobrescribe los datos guardados dañados', async ({ page }) => {
-  const clave = 'tablero-de-pendientes:/kanban/'
-  await page.evaluate((c) => localStorage.setItem(c, '{dañado'), clave)
-  await page.reload()
-
-  const campo = await abrirCampo(page, 'Por hacer')
-  await campo.fill('Comprar pan')
-  await campo.press('Enter')
-  await expect(pendientes(page, 'Por hacer')).toHaveCount(1)
-
-  expect(await page.evaluate((c) => localStorage.getItem(c), clave)).toBe('{dañado')
-})
-
 test('sigue funcionando en memoria si el navegador no puede guardar', async ({ page }) => {
   await page.evaluate(() => {
     Storage.prototype.setItem = () => {

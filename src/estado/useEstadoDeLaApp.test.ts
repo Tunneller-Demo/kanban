@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { tableroDeEjemplo, tableroDePartida, type Tablero } from '@/modelo/tablero'
 import { claveDeAlmacenamiento } from '@/persistencia/clave'
 import { guardarTablero } from '@/persistencia/persistencia'
@@ -23,6 +23,105 @@ const marcaGuardada = () => JSON.parse(localStorage.getItem(claveDeAlmacenamient
 beforeEach(() => {
   localStorage.clear()
   guardarTablero(tableroDePartida(), false)
+})
+
+afterEach(() => vi.restoreAllMocks())
+
+const romperElGuardado = () =>
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new DOMException('Sin espacio', 'QuotaExceededError')
+  })
+
+describe('fallos de guardado', () => {
+  it('sin fallos no avisa', () => {
+    const { result, crear } = preparar()
+
+    crear('Comprar pan')
+
+    expect(result.current.guardadoFalla).toBe(false)
+  })
+
+  it('si un guardado falla lo avisa y el cambio sigue en memoria', () => {
+    const { result, crear, titulos } = preparar()
+    romperElGuardado()
+
+    crear('Comprar pan')
+
+    expect(result.current.guardadoFalla).toBe(true)
+    expect(titulos()).toEqual(['Comprar pan'])
+  })
+
+  it('reintenta con cada cambio y el aviso cae en cuanto un guardado funciona', () => {
+    const { result, crear } = preparar()
+    const espia = romperElGuardado()
+    crear('Comprar pan')
+    crear('Regar')
+    expect(espia).toHaveBeenCalledTimes(2)
+    expect(result.current.guardadoFalla).toBe(true)
+
+    espia.mockRestore()
+    crear('Llamar al banco')
+
+    expect(result.current.guardadoFalla).toBe(false)
+    expect(guardado()).toEqual(result.current.tablero)
+  })
+
+  it('una importación que no cabe se muestra con el aviso, sin rechazarla', () => {
+    const { result } = preparar()
+    const importado: Tablero = { etapas: [{ id: 'a', nombre: 'Hoy', pendientes: [] }] }
+    romperElGuardado()
+
+    act(() => result.current.importar(importado))
+
+    expect(result.current.tablero).toEqual(importado)
+    expect(result.current.guardadoFalla).toBe(true)
+  })
+})
+
+describe('datos guardados dañados', () => {
+  const abrirDanado = () => {
+    localStorage.setItem(claveDeAlmacenamiento(), 'datos dañados')
+    return preparar()
+  }
+
+  it('expone el contenido para rescatarlo', () => {
+    expect(abrirDanado().result.current.datosDanados).toBe('datos dañados')
+  })
+
+  it('sin datos dañados no hay nada que rescatar', () => {
+    expect(preparar().result.current.datosDanados).toBeNull()
+  })
+
+  it('«Empezar de cero» cierra el rescate y guarda el Tablero de partida', () => {
+    const { result } = abrirDanado()
+
+    act(() => result.current.empezarDeCero())
+
+    expect(result.current.datosDanados).toBeNull()
+    expect(result.current.tablero).toEqual(tableroDePartida())
+    expect(guardado()).toEqual(tableroDePartida())
+    expect(result.current.anuncio).toBe('Tablero vacío abierto')
+    expect(result.current.foco).toEqual({ tipo: 'crear', id: 'por-hacer' })
+  })
+
+  it('tras «Empezar de cero» se vuelve a guardar con normalidad', () => {
+    const { result, crear } = abrirDanado()
+
+    act(() => result.current.empezarDeCero())
+    crear('Comprar pan')
+
+    expect(guardado()).toEqual(result.current.tablero)
+  })
+
+  it('«Empezar de cero» con el guardado fallando abre el Tablero y avisa', () => {
+    const { result } = abrirDanado()
+    romperElGuardado()
+
+    act(() => result.current.empezarDeCero())
+
+    expect(result.current.tablero).toEqual(tableroDePartida())
+    expect(result.current.guardadoFalla).toBe(true)
+  })
 })
 
 describe('Tablero de ejemplo', () => {

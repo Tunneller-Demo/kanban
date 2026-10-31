@@ -31,6 +31,10 @@ export const ANUNCIO_EJEMPLO_ABIERTO = `${AVISO_EJEMPLO_ABIERTO}. Deshacer dispo
 
 export const ANUNCIO_TABLERO_VACIO_RECUPERADO = 'Tablero vacío recuperado'
 
+export const ANUNCIO_TABLERO_VACIO_ABIERTO = 'Tablero vacío abierto'
+
+export const ANUNCIO_DATOS_DESCARGADOS = 'Datos guardados descargados'
+
 export const ANUNCIO_COPIA_EXPORTADA = 'Copia de seguridad exportada'
 
 export const AVISO_COPIA_IMPORTADA = 'Copia de seguridad importada'

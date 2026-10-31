@@ -1,9 +1,14 @@
 import { useRef } from 'react'
+import { ANUNCIO_COPIA_EXPORTADA } from '@/anuncios/anuncios'
+import { exportarCopia, nombreDeCopia } from '@/copia/copia'
 import { useEstadoDeLaApp } from '@/estado/useEstadoDeLaApp'
 import { AvisoDeDeshacer } from '@/interfaz/AvisoDeDeshacer'
+import { BarraDeGuardado } from '@/interfaz/BarraDeGuardado'
 import { CopiaDeSeguridad } from '@/interfaz/CopiaDeSeguridad'
+import { descargarArchivo } from '@/interfaz/descargar'
 import { Importacion } from '@/interfaz/Importacion'
 import { InvitacionDeTableroVacio } from '@/interfaz/InvitacionDeTableroVacio'
+import { RescateDeDatos } from '@/interfaz/RescateDeDatos'
 import { Tablero } from '@/interfaz/Tablero'
 import { Vaciar } from '@/interfaz/Vaciar'
 import { contarPendientes } from '@/modelo/tablero'
@@ -16,6 +21,8 @@ export function App() {
     ordenDeAnuncio,
     foco,
     avisoDeDeshacer,
+    guardadoFalla,
+    datosDanados,
     crear,
     editar,
     borrar,
@@ -36,11 +43,18 @@ export function App() {
     importar,
     deshacer,
     cerrarAviso,
+    empezarDeCero,
     anunciar,
   } = useEstadoDeLaApp()
   const entradaDeArchivo = useRef<HTMLInputElement>(null)
   const totalDePendientes = contarPendientes(tablero)
   const elegirArchivo = () => entradaDeArchivo.current?.click()
+
+  function exportar() {
+    const ahora = new Date()
+    descargarArchivo(nombreDeCopia(ahora), exportarCopia(tablero, ahora))
+    anunciar(ANUNCIO_COPIA_EXPORTADA)
+  }
 
   return (
     <div className="flex h-dvh flex-col">
@@ -55,6 +69,7 @@ export function App() {
           onVaciar={vaciar}
         />
       </header>
+      <BarraDeGuardado activa={guardadoFalla} onExportar={exportar} />
       {totalDePendientes === 0 && (
         <InvitacionDeTableroVacio onVerEjemplo={verEjemplo} onElegirArchivo={elegirArchivo} />
       )}
@@ -83,12 +98,12 @@ export function App() {
           <AvisoDeDeshacer texto={avisoDeDeshacer} onDeshacer={deshacer} onCerrar={cerrarAviso} />
         )}
         <div className="flex flex-wrap items-center gap-x-3">
-          <p>Tus datos se guardan solo en este navegador</p>
-          <CopiaDeSeguridad
-            tablero={tablero}
-            onElegirArchivo={elegirArchivo}
-            onAnunciar={anunciar}
-          />
+          <p>
+            {guardadoFalla
+              ? 'Tus cambios solo están en esta pestaña'
+              : 'Tus datos se guardan solo en este navegador'}
+          </p>
+          <CopiaDeSeguridad onExportar={exportar} onElegirArchivo={elegirArchivo} />
         </div>
         <p>Construida con Tunneller</p>
       </footer>
@@ -98,6 +113,13 @@ export function App() {
         ejemploIntacto={ejemploIntacto}
         onImportar={importar}
       />
+      {datosDanados !== null && (
+        <RescateDeDatos
+          contenido={datosDanados}
+          onEmpezarDeCero={empezarDeCero}
+          onAnunciar={anunciar}
+        />
+      )}
       <div role="status" aria-live="polite" className="sr-only">
         <span key={ordenDeAnuncio}>{anuncio}</span>
       </div>

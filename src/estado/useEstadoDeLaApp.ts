@@ -5,6 +5,7 @@ import {
   ANUNCIO_COPIA_IMPORTADA,
   ANUNCIO_EJEMPLO_ABIERTO,
   ANUNCIO_TABLERO_ANTERIOR_RECUPERADO,
+  ANUNCIO_TABLERO_VACIO_ABIERTO,
   ANUNCIO_TABLERO_VACIO_RECUPERADO,
   anuncioEtapaBorrada,
   anuncioEtapaCreada,
@@ -70,6 +71,14 @@ export function useEstadoDeLaApp() {
   const [anuncio, setAnuncio] = useState({ texto: '', orden: 0 })
   const [foco, setFoco] = useState<Foco | null>(null)
   const [deshacerDisponible, setDeshacerDisponible] = useState<Deshacer | null>(null)
+  const [guardadoFalla, setGuardadoFalla] = useState(false)
+  const [datosDanados, setDatosDanados] = useState(() =>
+    carga.tipo === 'danado' ? carga.contenido : null,
+  )
+
+  function guardar(nuevo: Tablero, intacto: boolean) {
+    setGuardadoFalla(guardarTablero(nuevo, intacto) === 'fallo')
+  }
 
   // Solo «Ver el Tablero de ejemplo» deja el ejemplo intacto: todo lo demás es un cambio.
   function aplicar(nuevo: Tablero, intacto = false) {
@@ -77,7 +86,7 @@ export function useEstadoDeLaApp() {
     setEjemploIntacto(intacto)
     setDeshacerDisponible(null)
     // Los datos dañados no se sobrescriben: el rescate llega antes que cualquier escritura.
-    if (carga.tipo !== 'danado') guardarTablero(nuevo, intacto)
+    if (datosDanados === null) guardar(nuevo, intacto)
   }
 
   // El orden distingue dos anuncios con el mismo texto: si no, el segundo no se oiría.
@@ -327,6 +336,14 @@ export function useEstadoDeLaApp() {
     setFoco({ ...deshacerDisponible.focoAlCerrar })
   }
 
+  // Tras el diálogo de rescate ya está el Tablero de partida: solo falta guardarlo.
+  function empezarDeCero() {
+    setDatosDanados(null)
+    guardar(tablero, false)
+    setFoco({ tipo: 'crear', id: tablero.etapas[0].id })
+    anunciar(ANUNCIO_TABLERO_VACIO_ABIERTO)
+  }
+
   return {
     tablero,
     ejemploIntacto,
@@ -334,6 +351,8 @@ export function useEstadoDeLaApp() {
     ordenDeAnuncio: anuncio.orden,
     foco,
     avisoDeDeshacer: deshacerDisponible?.aviso ?? null,
+    guardadoFalla,
+    datosDanados,
     crear,
     editar,
     borrar,
@@ -354,6 +373,7 @@ export function useEstadoDeLaApp() {
     importar,
     deshacer,
     cerrarAviso,
+    empezarDeCero,
     anunciar,
   }
 }

@@ -1,9 +1,5 @@
 import { Download, Upload } from 'lucide-react'
 import { useState } from 'react'
-import { ANUNCIO_COPIA_EXPORTADA } from '@/anuncios/anuncios'
-import { exportarCopia, nombreDeCopia } from '@/copia/copia'
-import type { Tablero } from '@/modelo/tablero'
-import { descargarArchivo } from './descargar'
 import { estiloDeBoton, estiloDeTitulo } from './estilos'
 import {
   Dialog,
@@ -14,19 +10,12 @@ import {
 } from './ui/dialog'
 
 type Props = {
-  tablero: Tablero
+  onExportar: () => void
   onElegirArchivo: () => void
-  onAnunciar: (texto: string) => void
 }
 
-export function CopiaDeSeguridad({ tablero, onElegirArchivo, onAnunciar }: Props) {
+export function CopiaDeSeguridad({ onExportar, onElegirArchivo }: Props) {
   const [abierto, setAbierto] = useState(false)
-
-  function exportar() {
-    const ahora = new Date()
-    descargarArchivo(nombreDeCopia(ahora), exportarCopia(tablero, ahora))
-    onAnunciar(ANUNCIO_COPIA_EXPORTADA)
-  }
 
   // Se cierra ya: el selector de archivos solo se abre en el mismo gesto, y al importar
   // este diálogo se llevaría el foco del Estado.
@@ -46,7 +35,7 @@ export function CopiaDeSeguridad({ tablero, onElegirArchivo, onAnunciar }: Props
           Tus datos se guardan solo en este navegador: si borras sus datos, se pierden.
         </DialogDescription>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={exportar} className={estiloDeBoton}>
+          <button type="button" onClick={onExportar} className={estiloDeBoton}>
             <Download aria-hidden className="size-4" />
             Exportar
           </button>

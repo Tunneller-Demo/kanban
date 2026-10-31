@@ -2,21 +2,29 @@ import { StickyNote } from 'lucide-react'
 import { nombreDePendiente } from '@/anuncios/anuncios'
 import type { CambiosDePendiente, Pendiente as DatosPendiente } from '@/modelo/tablero'
 import { DialogoDePendiente } from './DialogoDePendiente'
+import { claveDeFoco } from './foco'
 import { colorDeEtiqueta, FormaDeEtiqueta } from './FormaDeEtiqueta'
 
 type Props = {
   pendiente: DatosPendiente
   onEditar: (cambios: CambiosDePendiente) => void
+  onBorrar: () => void
   onAnunciar: (texto: string) => void
 }
 
-export function Pendiente({ pendiente, onEditar, onAnunciar }: Props) {
+export function Pendiente({ pendiente, onEditar, onBorrar, onAnunciar }: Props) {
   const { titulo, nota, etiqueta } = pendiente
 
   return (
     <li>
-      <DialogoDePendiente pendiente={pendiente} onEditar={onEditar} onAnunciar={onAnunciar}>
+      <DialogoDePendiente
+        pendiente={pendiente}
+        onEditar={onEditar}
+        onBorrar={onBorrar}
+        onAnunciar={onAnunciar}
+      >
         <button
+          data-foco={claveDeFoco({ tipo: 'pendiente', id: pendiente.id })}
           type="button"
           aria-label={nombreDePendiente(pendiente)}
           className="relative flex w-full items-start gap-1.5 rounded-md bg-card px-2.5 py-2 text-left text-sm wrap-anywhere text-card-foreground hover:brightness-125"

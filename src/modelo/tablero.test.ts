@@ -1,9 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
+  borrarPendiente,
   crearPendiente,
   editarPendiente,
   esTablero,
+  localizarPendiente,
   tableroDePartida,
   type CambiosDePendiente,
   type Etiqueta,
@@ -200,6 +202,82 @@ describe('editarPendiente', () => {
     })
 
     expect(esTablero(tablero)).toBe(true)
+  })
+})
+
+describe('borrarPendiente', () => {
+  const conVarios = (): Tablero => ({
+    etapas: [
+      { id: 'e1', nombre: 'Por hacer', pendientes: [{ id: 'x', titulo: 'Otro' }] },
+      {
+        id: 'e2',
+        nombre: 'Hecho',
+        pendientes: [
+          { id: 'a', titulo: 'Comprar pan' },
+          { id: 'b', titulo: 'Llamar al banco', nota: 'Urgente', etiqueta: 'rojo' },
+          { id: 'c', titulo: 'Regar' },
+        ],
+      },
+    ],
+  })
+
+  it('quita el Pendiente y conserva el orden de los demás', () => {
+    const tablero = borrarPendiente(conVarios(), 'b')
+
+    expect(tablero.etapas[1].pendientes.map((pendiente) => pendiente.id)).toEqual(['a', 'c'])
+  })
+
+  it('deja intactas las demás Etapas', () => {
+    expect(borrarPendiente(conVarios(), 'b').etapas[0]).toEqual(conVarios().etapas[0])
+  })
+
+  it('no modifica el Tablero que recibe, que sirve para restaurarlo tal cual', () => {
+    const tablero = conVarios()
+
+    borrarPendiente(tablero, 'b')
+
+    expect(tablero).toEqual(conVarios())
+  })
+
+  it('deja la Etapa vacía al borrar su único Pendiente', () => {
+    expect(borrarPendiente(conVarios(), 'x').etapas[0].pendientes).toEqual([])
+  })
+
+  it('devuelve el mismo Tablero si el Pendiente no existe', () => {
+    const tablero = conVarios()
+
+    expect(borrarPendiente(tablero, 'no-existe')).toBe(tablero)
+  })
+
+  it('el resultado sigue siendo un Tablero válido', () => {
+    expect(esTablero(borrarPendiente(conVarios(), 'x'))).toBe(true)
+  })
+})
+
+describe('localizarPendiente', () => {
+  const tablero: Tablero = {
+    etapas: [
+      {
+        id: 'e1',
+        nombre: 'Por hacer',
+        pendientes: [
+          { id: 'a', titulo: 'Comprar pan' },
+          { id: 'b', titulo: 'Regar' },
+        ],
+      },
+    ],
+  }
+
+  it('da el Pendiente, su Etapa y su índice', () => {
+    expect(localizarPendiente(tablero, 'b')).toEqual({
+      etapa: tablero.etapas[0],
+      indice: 1,
+      pendiente: { id: 'b', titulo: 'Regar' },
+    })
+  })
+
+  it('no da nada si el Pendiente no existe', () => {
+    expect(localizarPendiente(tablero, 'no-existe')).toBeUndefined()
   })
 })
 

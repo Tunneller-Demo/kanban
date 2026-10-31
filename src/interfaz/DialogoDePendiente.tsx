@@ -1,4 +1,4 @@
-import { Ban } from 'lucide-react'
+import { Ban, Trash2 } from 'lucide-react'
 import { useId, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import {
   anuncioCambiosSinGuardar,
@@ -25,13 +25,14 @@ const estiloDeRotulo = 'mb-1 block text-[13px] font-medium text-muted-foreground
 type Props = {
   pendiente: Pendiente
   onEditar: (cambios: CambiosDePendiente) => void
+  onBorrar: () => void
   onAnunciar: (texto: string) => void
   children: ReactElement
 }
 
 // Guarda cada cambio al momento. Los campos conservan lo escrito aunque el Modelo lo rechace,
 // para no cortar en silencio lo pegado de más.
-export function DialogoDePendiente({ pendiente, onEditar, onAnunciar, children }: Props) {
+export function DialogoDePendiente({ pendiente, onEditar, onBorrar, onAnunciar, children }: Props) {
   const idTitulo = useId()
   const idContadorDeTitulo = useId()
   const idNota = useId()
@@ -154,6 +155,15 @@ export function DialogoDePendiente({ pendiente, onEditar, onAnunciar, children }
             ))}
           </div>
         </fieldset>
+        {/* Borrar desmonta el diálogo con su Pendiente: el foco lo decide el Estado. */}
+        <button
+          type="button"
+          onClick={onBorrar}
+          className="flex min-h-11 items-center gap-1.5 self-start rounded-md border border-input px-2.5 text-sm text-destructive hover:bg-muted carriles:min-h-8"
+        >
+          <Trash2 aria-hidden className="size-4" />
+          Borrar
+        </button>
       </DialogContent>
     </Dialog>
   )

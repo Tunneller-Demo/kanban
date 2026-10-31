@@ -20,6 +20,23 @@ export function anuncioPendienteCreado(
   return `"${titulo}" creado en ${nombreDeEtapa}, posición 1 de ${total}`
 }
 
+export function avisoPendienteBorrado(titulo: string): string {
+  return `"${titulo}" borrado`
+}
+
+export function anuncioPendienteBorrado(titulo: string): string {
+  return `${avisoPendienteBorrado(titulo)}. Deshacer disponible`
+}
+
+export function anuncioPendienteRestaurado(
+  titulo: string,
+  nombreDeEtapa: string,
+  posicion: number,
+  total: number,
+): string {
+  return `"${titulo}" restaurado en ${nombreDeEtapa}, posición ${posicion} de ${total}`
+}
+
 export function anuncioTituloDemasiadoLargo(exceso: number): string {
   return `Pendiente sin crear. ${textoDeExceso(exceso)}`
 }

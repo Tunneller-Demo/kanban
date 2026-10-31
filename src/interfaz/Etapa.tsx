@@ -1,16 +1,18 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { CambiosDePendiente, Etapa as DatosEtapa } from '@/modelo/tablero'
 import { CampoDePendiente } from './CampoDePendiente'
+import { claveDeFoco } from './foco'
 import { Pendiente } from './Pendiente'
 
 type Props = {
   etapa: DatosEtapa
   onCrear: (titulo: string) => boolean
   onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
+  onBorrar: (pendienteId: string) => void
   onAnunciar: (texto: string) => void
 }
 
-export function Etapa({ etapa, onCrear, onEditar, onAnunciar }: Props) {
+export function Etapa({ etapa, onCrear, onEditar, onBorrar, onAnunciar }: Props) {
   const idEncabezado = useId()
   const total = etapa.pendientes.length
   const botonCrear = useRef<HTMLButtonElement>(null)
@@ -51,6 +53,7 @@ export function Etapa({ etapa, onCrear, onEditar, onAnunciar }: Props) {
       ) : (
         <button
           ref={botonCrear}
+          data-foco={claveDeFoco({ tipo: 'crear', id: etapa.id })}
           type="button"
           onClick={() => setCreando(true)}
           aria-label={`Añadir Pendiente a ${etapa.nombre}`}
@@ -66,6 +69,7 @@ export function Etapa({ etapa, onCrear, onEditar, onAnunciar }: Props) {
               key={pendiente.id}
               pendiente={pendiente}
               onEditar={(cambios) => onEditar(pendiente.id, cambios)}
+              onBorrar={() => onBorrar(pendiente.id)}
               onAnunciar={onAnunciar}
             />
           ))}

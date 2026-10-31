@@ -36,6 +36,20 @@ test('el diálogo del Pendiente no tiene infracciones de WCAG A y AA', async ({ 
   expect(await infracciones(page)).toEqual([])
 })
 
+test('el aviso de «Deshacer» no tiene infracciones de WCAG A y AA', async ({ page }) => {
+  await page.goto('/kanban/')
+  await page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' }).click()
+  const campo = page.getByRole('textbox', { name: 'Título del nuevo Pendiente en Por hacer' })
+  await campo.fill('Comprar pan')
+  await campo.press('Enter')
+  await campo.press('Escape')
+  await page.getByRole('button', { name: 'Comprar pan' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click()
+  await expect(page.getByRole('button', { name: 'Deshacer' })).toBeVisible()
+
+  expect(await infracciones(page)).toEqual([])
+})
+
 test('crear un Pendiente no tiene infracciones de WCAG A y AA', async ({ page }) => {
   await page.goto('/kanban/')
   await page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' }).click()

@@ -2,9 +2,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   anuncioCambiosSinGuardar,
+  anuncioPendienteBorrado,
   anuncioPendienteCreado,
+  anuncioPendienteRestaurado,
   anuncioTituloDemasiadoLargo,
   anuncioTituloRecuperado,
+  avisoPendienteBorrado,
   nombreDeEtiqueta,
   nombreDePendiente,
   textoDeExceso,
@@ -14,6 +17,28 @@ describe('anuncioPendienteCreado', () => {
   it('dice el título, la Etapa y la posición', () => {
     expect(anuncioPendienteCreado('Comprar pan', 'Por hacer', 3)).toBe(
       '"Comprar pan" creado en Por hacer, posición 1 de 3',
+    )
+  })
+})
+
+describe('avisoPendienteBorrado', () => {
+  it('dice qué se borró', () => {
+    expect(avisoPendienteBorrado('Comprar pan')).toBe('"Comprar pan" borrado')
+  })
+})
+
+describe('anuncioPendienteBorrado', () => {
+  it('dice qué se borró y que se puede deshacer', () => {
+    expect(anuncioPendienteBorrado('Comprar pan')).toBe(
+      '"Comprar pan" borrado. Deshacer disponible',
+    )
+  })
+})
+
+describe('anuncioPendienteRestaurado', () => {
+  it('dice el título, la Etapa y la posición', () => {
+    expect(anuncioPendienteRestaurado('Comprar pan', 'Por hacer', 2, 3)).toBe(
+      '"Comprar pan" restaurado en Por hacer, posición 2 de 3',
     )
   })
 })

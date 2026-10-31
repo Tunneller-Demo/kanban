@@ -1,8 +1,21 @@
 import { useEstadoDeLaApp } from '@/estado/useEstadoDeLaApp'
+import { AvisoDeDeshacer } from '@/interfaz/AvisoDeDeshacer'
 import { Tablero } from '@/interfaz/Tablero'
 
 export function App() {
-  const { tablero, anuncio, crear, editar, anunciar } = useEstadoDeLaApp()
+  const {
+    tablero,
+    anuncio,
+    ordenDeAnuncio,
+    foco,
+    avisoDeDeshacer,
+    crear,
+    editar,
+    borrar,
+    deshacer,
+    cerrarAviso,
+    anunciar,
+  } = useEstadoDeLaApp()
 
   return (
     <div className="flex h-dvh flex-col">
@@ -14,14 +27,24 @@ export function App() {
       </header>
       {/* Solo se desplaza `main`: así el pie queda fijo sin tapar nunca el foco. */}
       <main className="flex min-h-0 flex-1 flex-col overflow-auto">
-        <Tablero tablero={tablero} onCrear={crear} onEditar={editar} onAnunciar={anunciar} />
+        <Tablero
+          tablero={tablero}
+          foco={foco}
+          onCrear={crear}
+          onEditar={editar}
+          onBorrar={borrar}
+          onAnunciar={anunciar}
+        />
       </main>
-      <footer className="flex flex-none flex-wrap justify-between gap-x-4 border-t px-4 py-1.5 text-xs text-muted-foreground carriles:px-6">
+      <footer className="flex flex-none flex-wrap justify-between gap-x-4 gap-y-1.5 border-t px-4 py-1.5 text-xs text-muted-foreground carriles:px-6">
+        {avisoDeDeshacer && (
+          <AvisoDeDeshacer texto={avisoDeDeshacer} onDeshacer={deshacer} onCerrar={cerrarAviso} />
+        )}
         <p>Tus datos se guardan solo en este navegador</p>
         <p>Construida con Tunneller</p>
       </footer>
       <div role="status" aria-live="polite" className="sr-only">
-        {anuncio}
+        <span key={ordenDeAnuncio}>{anuncio}</span>
       </div>
     </div>
   )

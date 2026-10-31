@@ -33,6 +33,12 @@ export type CambiosDePendiente = {
   etiqueta?: Etiqueta | null
 }
 
+export type SitioDePendiente = {
+  etapa: Etapa
+  indice: number
+  pendiente: Pendiente
+}
+
 export function tableroDePartida(): Tablero {
   return {
     etapas: [
@@ -70,9 +76,7 @@ export function editarPendiente(
   pendienteId: string,
   cambios: CambiosDePendiente,
 ): Tablero {
-  const actual = tablero.etapas
-    .flatMap((etapa) => etapa.pendientes)
-    .find((pendiente) => pendiente.id === pendienteId)
+  const actual = localizarPendiente(tablero, pendienteId)?.pendiente
   // La nota en blanco se quita, pero la que no cabe se rechaza aunque solo tenga espacios.
   if (!actual || (cambios.nota?.length ?? 0) > LIMITE_NOTA) return tablero
 
@@ -86,6 +90,28 @@ export function editarPendiente(
         pendiente.id === pendienteId ? editado : pendiente,
       ),
     })),
+  }
+}
+
+// Si el Pendiente no existe, devuelve el mismo Tablero.
+export function borrarPendiente(tablero: Tablero, pendienteId: string): Tablero {
+  if (!localizarPendiente(tablero, pendienteId)) return tablero
+
+  return {
+    etapas: tablero.etapas.map((etapa) => ({
+      ...etapa,
+      pendientes: etapa.pendientes.filter((pendiente) => pendiente.id !== pendienteId),
+    })),
+  }
+}
+
+export function localizarPendiente(
+  tablero: Tablero,
+  pendienteId: string,
+): SitioDePendiente | undefined {
+  for (const etapa of tablero.etapas) {
+    const indice = etapa.pendientes.findIndex((pendiente) => pendiente.id === pendienteId)
+    if (indice !== -1) return { etapa, indice, pendiente: etapa.pendientes[indice] }
   }
 }
 

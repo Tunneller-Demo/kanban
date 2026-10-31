@@ -5,7 +5,14 @@ import { Tablero } from './Tablero'
 
 const pintar = (tablero: DatosTablero) =>
   render(
-    <Tablero tablero={tablero} onCrear={() => true} onEditar={() => {}} onAnunciar={() => {}} />,
+    <Tablero
+      tablero={tablero}
+      foco={null}
+      onCrear={() => true}
+      onEditar={() => {}}
+      onBorrar={() => {}}
+      onAnunciar={() => {}}
+    />,
   )
 
 describe('Tablero', () => {

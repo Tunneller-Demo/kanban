@@ -1,7 +1,14 @@
 // Estado de la app: une el Modelo con la Persistencia y guarda tras cada cambio.
 import { useState } from 'react'
 import { anuncioPendienteCreado, anuncioTituloDemasiadoLargo } from '@/anuncios/anuncios'
-import { crearPendiente, LIMITE_TITULO, tableroDePartida } from '@/modelo/tablero'
+import {
+  crearPendiente,
+  editarPendiente,
+  LIMITE_TITULO,
+  tableroDePartida,
+  type CambiosDePendiente,
+  type Tablero,
+} from '@/modelo/tablero'
 import { cargarTablero, guardarTablero } from '@/persistencia/persistencia'
 
 export function useEstadoDeLaApp() {
@@ -10,6 +17,12 @@ export function useEstadoDeLaApp() {
     carga.tipo === 'guardado' ? carga.tablero : tableroDePartida(),
   )
   const [anuncio, setAnuncio] = useState('')
+
+  function aplicar(nuevo: Tablero) {
+    setTablero(nuevo)
+    // Los datos dañados no se sobrescriben: el rescate llega antes que cualquier escritura.
+    if (carga.tipo !== 'danado') guardarTablero(nuevo)
+  }
 
   // Devuelve si se creó: el campo solo se vacía entonces.
   function crear(etapaId: string, texto: string): boolean {
@@ -20,14 +33,17 @@ export function useEstadoDeLaApp() {
       return false
     }
 
-    setTablero(nuevo)
-    // Los datos dañados no se sobrescriben: el rescate llega antes que cualquier escritura.
-    if (carga.tipo !== 'danado') guardarTablero(nuevo)
+    aplicar(nuevo)
 
     const etapa = nuevo.etapas.find((candidata) => candidata.id === etapaId)!
     setAnuncio(anuncioPendienteCreado(texto.trim(), etapa.nombre, etapa.pendientes.length))
     return true
   }
 
-  return { tablero, anuncio, crear }
+  function editar(pendienteId: string, cambios: CambiosDePendiente) {
+    const nuevo = editarPendiente(tablero, pendienteId, cambios)
+    if (nuevo !== tablero) aplicar(nuevo)
+  }
+
+  return { tablero, anuncio, crear, editar, anunciar: setAnuncio }
 }

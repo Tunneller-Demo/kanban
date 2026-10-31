@@ -7,10 +7,11 @@ type Props = {
   id: string
   longitud: number
   limite: number
+  aviso?: string // Se añade al texto de exceso, para decir qué pasa con lo que sobra.
 }
 
 // Siempre en el DOM y vacío lejos del límite, para que `aria-describedby` apunte a algo.
-export function ContadorDeCaracteres({ id, longitud, limite }: Props) {
+export function ContadorDeCaracteres({ id, longitud, limite, aviso }: Props) {
   const exceso = longitud - limite
 
   return (
@@ -23,7 +24,12 @@ export function ContadorDeCaracteres({ id, longitud, limite }: Props) {
     >
       {longitud >= limite * INICIO_DEL_AVISO && (
         <>
-          {exceso > 0 && <span className="font-sans">{textoDeExceso(exceso)} </span>}
+          {exceso > 0 && (
+            <span className="font-sans">
+              {textoDeExceso(exceso)}
+              {aviso && `. ${aviso}`}{' '}
+            </span>
+          )}
           {longitud}/{limite}
         </>
       )}

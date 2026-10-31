@@ -1,6 +1,15 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { crearPendiente, esTablero, tableroDePartida } from './tablero'
+import {
+  crearPendiente,
+  editarPendiente,
+  esTablero,
+  tableroDePartida,
+  type CambiosDePendiente,
+  type Etiqueta,
+  type Pendiente,
+  type Tablero,
+} from './tablero'
 
 describe('tableroDePartida', () => {
   it('trae las tres Etapas de partida en orden', () => {
@@ -84,6 +93,113 @@ describe('crearPendiente', () => {
     const tablero = tableroDePartida()
 
     expect(crearPendiente(tablero, 'no-existe', 'Comprar pan', 'a')).toBe(tablero)
+  })
+})
+
+describe('editarPendiente', () => {
+  const conPendiente = (extra: Partial<Pendiente> = {}) => ({
+    etapas: [
+      { id: 'e1', nombre: 'Por hacer', pendientes: [{ id: 'x', titulo: 'Otro' }] },
+      { id: 'e2', nombre: 'Hecho', pendientes: [{ id: 'a', titulo: 'Comprar pan', ...extra }] },
+    ],
+  })
+  const editado = (tablero: Tablero) => tablero.etapas[1].pendientes[0]
+
+  it('cambia el título, recortando los espacios de los extremos', () => {
+    const tablero = editarPendiente(conPendiente(), 'a', { titulo: '  Comprar  leche ' })
+
+    expect(editado(tablero)).toEqual({ id: 'a', titulo: 'Comprar  leche' })
+  })
+
+  it('cambia la nota y conserva sus saltos de línea', () => {
+    const tablero = editarPendiente(conPendiente(), 'a', { nota: 'Integral\n\n  y de centeno\n' })
+
+    expect(editado(tablero).nota).toBe('Integral\n\n  y de centeno\n')
+  })
+
+  it('quita la nota si queda vacía o solo con espacios', () => {
+    for (const nota of ['', ' \n\t']) {
+      const tablero = editarPendiente(conPendiente({ nota: 'Integral' }), 'a', { nota })
+
+      expect(editado(tablero)).toEqual({ id: 'a', titulo: 'Comprar pan' })
+    }
+  })
+
+  it('pone una Etiqueta y sustituye la anterior', () => {
+    const tablero = editarPendiente(conPendiente({ etiqueta: 'rojo' }), 'a', { etiqueta: 'azul' })
+
+    expect(editado(tablero).etiqueta).toBe('azul')
+  })
+
+  it('quita la Etiqueta', () => {
+    const tablero = editarPendiente(conPendiente({ etiqueta: 'rojo' }), 'a', { etiqueta: null })
+
+    expect(editado(tablero)).toEqual({ id: 'a', titulo: 'Comprar pan' })
+  })
+
+  it('conserva lo que no cambia y deja el Pendiente en su sitio', () => {
+    const tablero = editarPendiente(conPendiente({ nota: 'Integral', etiqueta: 'verde' }), 'a', {
+      titulo: 'Comprar leche',
+    })
+
+    expect(tablero.etapas[0]).toEqual(conPendiente().etapas[0])
+    expect(editado(tablero)).toEqual({
+      id: 'a',
+      titulo: 'Comprar leche',
+      nota: 'Integral',
+      etiqueta: 'verde',
+    })
+  })
+
+  it('no modifica el Tablero que recibe', () => {
+    const tablero = conPendiente()
+
+    editarPendiente(tablero, 'a', { titulo: 'Comprar leche' })
+
+    expect(tablero).toEqual(conPendiente())
+  })
+
+  it('admite los límites exactos de título y nota', () => {
+    const titulo = 'a'.repeat(120)
+    const nota = 'a'.repeat(2000)
+
+    expect(editado(editarPendiente(conPendiente(), 'a', { titulo, nota }))).toMatchObject({
+      titulo,
+      nota,
+    })
+  })
+
+  it.each<[string, CambiosDePendiente]>([
+    ['un título vacío', { titulo: '' }],
+    ['un título solo con espacios', { titulo: ' \t ' }],
+    ['un título de 121 caracteres', { titulo: 'a'.repeat(121) }],
+    ['una nota de 2001 caracteres', { nota: 'a'.repeat(2001) }],
+    ['una nota de 2001 espacios', { nota: ' '.repeat(2001) }],
+    ['una Etiqueta desconocida', { etiqueta: 'fucsia' as Etiqueta }],
+    ['el mismo título', { titulo: 'Comprar pan' }],
+    ['el mismo título con espacios', { titulo: ' Comprar pan ' }],
+    ['la misma nota', { nota: 'Integral' }],
+    ['la misma Etiqueta', { etiqueta: 'azul' }],
+  ])('devuelve el mismo Tablero con %s', (_, cambios) => {
+    const tablero = conPendiente({ nota: 'Integral', etiqueta: 'azul' })
+
+    expect(editarPendiente(tablero, 'a', cambios)).toBe(tablero)
+  })
+
+  it('devuelve el mismo Tablero si el Pendiente no existe', () => {
+    const tablero = conPendiente()
+
+    expect(editarPendiente(tablero, 'no-existe', { titulo: 'Comprar leche' })).toBe(tablero)
+  })
+
+  it('el resultado sigue siendo un Tablero válido', () => {
+    const tablero = editarPendiente(conPendiente(), 'a', {
+      titulo: 'Comprar leche',
+      nota: 'Entera',
+      etiqueta: 'violeta',
+    })
+
+    expect(esTablero(tablero)).toBe(true)
   })
 })
 

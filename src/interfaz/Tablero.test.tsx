@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { tableroDePartida, type Tablero as DatosTablero } from '@/modelo/tablero'
 import { Tablero } from './Tablero'
 
-const pintar = (tablero: DatosTablero) => render(<Tablero tablero={tablero} onCrear={() => true} />)
+const pintar = (tablero: DatosTablero) =>
+  render(
+    <Tablero tablero={tablero} onCrear={() => true} onEditar={() => {}} onAnunciar={() => {}} />,
+  )
 
 describe('Tablero', () => {
   it('muestra cada Etapa como sección con su encabezado', () => {
@@ -25,5 +28,19 @@ describe('Tablero', () => {
 
     expect(screen.getByRole('region', { name: 'Por hacer' }).textContent).toContain('0 Pendientes')
     expect(screen.getByRole('region', { name: 'En curso' }).textContent).toContain('2 Pendientes')
+  })
+
+  it('dice la Etiqueta y si hay nota en el nombre del Pendiente', () => {
+    const tablero = tableroDePartida()
+    tablero.etapas[0].pendientes.push(
+      { id: 'a', titulo: 'Comprar pan', nota: 'Integral', etiqueta: 'rojo' },
+      { id: 'b', titulo: 'Llamar al banco' },
+    )
+    pintar(tablero)
+
+    expect(
+      screen.getByRole('button', { name: 'Comprar pan, Etiqueta roja, Tiene nota' }),
+    ).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Llamar al banco' })).toBeTruthy()
   })
 })

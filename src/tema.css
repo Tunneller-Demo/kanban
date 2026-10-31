@@ -25,6 +25,13 @@
 
   --ring: var(--primary);
   --ring-sobre-primary: var(--foreground);
+
+  --etiqueta-rojo: #ff6b6b;
+  --etiqueta-naranja: #ffa94d;
+  --etiqueta-amarillo: #ffe066;
+  --etiqueta-verde: #7be495;
+  --etiqueta-azul: #6cb6ff;
+  --etiqueta-violeta: #c79bff;
 }
 
 /* Sin tema claro: `dark:` siempre aplica, sea cual sea la preferencia del sistema. */

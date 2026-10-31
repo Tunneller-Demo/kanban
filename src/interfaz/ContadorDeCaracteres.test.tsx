@@ -28,6 +28,28 @@ describe('ContadorDeCaracteres', () => {
     expect(container.textContent).toContain('Sobran 5 caracteres')
   })
 
+  it('con el límite de la nota, aparece a los 1800 caracteres', () => {
+    const lejos = render(<ContadorDeCaracteres id="c" longitud={1799} limite={2000} />)
+    expect(lejos.container.textContent).toBe('')
+    lejos.unmount()
+
+    render(<ContadorDeCaracteres id="c" longitud={1800} limite={2000} />)
+    expect(screen.getByText('1800/2000')).toBeTruthy()
+  })
+
+  it('añade el aviso solo al pasarse', () => {
+    const justo = render(
+      <ContadorDeCaracteres id="c" longitud={2000} limite={2000} aviso="Sin guardar" />,
+    )
+    expect(justo.container.textContent).toBe('2000/2000')
+    justo.unmount()
+
+    const { container } = render(
+      <ContadorDeCaracteres id="c" longitud={2005} limite={2000} aviso="Sin guardar" />,
+    )
+    expect(container.textContent).toBe('Sobran 5 caracteres. Sin guardar 2005/2000')
+  })
+
   it('usa el singular si sobra un carácter', () => {
     const { container } = render(<ContadorDeCaracteres id="c" longitud={121} limite={120} />)
 

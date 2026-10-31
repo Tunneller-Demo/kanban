@@ -1,14 +1,16 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import type { Etapa as DatosEtapa } from '@/modelo/tablero'
+import type { CambiosDePendiente, Etapa as DatosEtapa } from '@/modelo/tablero'
 import { CampoDePendiente } from './CampoDePendiente'
 import { Pendiente } from './Pendiente'
 
 type Props = {
   etapa: DatosEtapa
   onCrear: (titulo: string) => boolean
+  onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
+  onAnunciar: (texto: string) => void
 }
 
-export function Etapa({ etapa, onCrear }: Props) {
+export function Etapa({ etapa, onCrear, onEditar, onAnunciar }: Props) {
   const idEncabezado = useId()
   const total = etapa.pendientes.length
   const botonCrear = useRef<HTMLButtonElement>(null)
@@ -60,7 +62,12 @@ export function Etapa({ etapa, onCrear }: Props) {
       {total > 0 && (
         <ol aria-labelledby={idEncabezado} className="mt-2 flex flex-col gap-1.5">
           {etapa.pendientes.map((pendiente) => (
-            <Pendiente key={pendiente.id} pendiente={pendiente} />
+            <Pendiente
+              key={pendiente.id}
+              pendiente={pendiente}
+              onEditar={(cambios) => onEditar(pendiente.id, cambios)}
+              onAnunciar={onAnunciar}
+            />
           ))}
         </ol>
       )}

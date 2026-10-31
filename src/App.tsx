@@ -2,7 +2,7 @@ import { useEstadoDeLaApp } from '@/estado/useEstadoDeLaApp'
 import { Tablero } from '@/interfaz/Tablero'
 
 export function App() {
-  const { tablero, anuncio, crear } = useEstadoDeLaApp()
+  const { tablero, anuncio, crear, editar, anunciar } = useEstadoDeLaApp()
 
   return (
     <div className="flex h-dvh flex-col">
@@ -14,7 +14,7 @@ export function App() {
       </header>
       {/* Solo se desplaza `main`: así el pie queda fijo sin tapar nunca el foco. */}
       <main className="flex min-h-0 flex-1 flex-col overflow-auto">
-        <Tablero tablero={tablero} onCrear={crear} />
+        <Tablero tablero={tablero} onCrear={crear} onEditar={editar} onAnunciar={anunciar} />
       </main>
       <footer className="flex flex-none flex-wrap justify-between gap-x-4 border-t px-4 py-1.5 text-xs text-muted-foreground carriles:px-6">
         <p>Tus datos se guardan solo en este navegador</p>

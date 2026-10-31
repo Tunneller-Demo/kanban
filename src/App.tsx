@@ -21,6 +21,8 @@ export function App() {
     renombrar,
     moverEtapaIzquierda,
     moverEtapaDerecha,
+    soltarEtapa,
+    dejarEtapa,
     quitarEtapa,
     deshacer,
     cerrarAviso,
@@ -53,6 +55,8 @@ export function App() {
           onRenombrar={renombrar}
           onMoverEtapaIzquierda={moverEtapaIzquierda}
           onMoverEtapaDerecha={moverEtapaDerecha}
+          onSoltarEtapa={soltarEtapa}
+          onDejarEtapa={dejarEtapa}
           onQuitarEtapa={quitarEtapa}
           onAnunciar={anunciar}
         />

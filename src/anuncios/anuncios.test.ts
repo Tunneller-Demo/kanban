@@ -3,11 +3,14 @@ import { describe, expect, it } from 'vitest'
 import {
   anuncioCambiosSinGuardar,
   anuncioEtapaBorrada,
+  anuncioEtapaCogida,
   anuncioEtapaCreada,
   anuncioEtapaMovida,
   anuncioEtapaRenombrada,
   anuncioEtapaRestaurada,
   anuncioEtapaSinCrear,
+  anuncioEtapaSinMover,
+  anuncioEtapaSobre,
   anuncioNombreRecuperado,
   anuncioNombreSinGuardar,
   anuncioPendienteBorrado,
@@ -109,6 +112,12 @@ describe('anuncioTituloRecuperado', () => {
 describe('anuncios de Etapa', () => {
   it('al moverla dice la posición con la frase de la Especificación', () => {
     expect(anuncioEtapaMovida('Hecho', 2, 3)).toBe('Etapa Hecho movida a la posición 2 de 3')
+  })
+
+  it('al arrastrarla dice la posición en cada momento', () => {
+    expect(anuncioEtapaCogida('Hecho', 3, 3)).toBe('Etapa Hecho cogida, posición 3 de 3')
+    expect(anuncioEtapaSobre('Hecho', 2, 3)).toBe('Etapa Hecho sobre la posición 2 de 3')
+    expect(anuncioEtapaSinMover('Hecho', 3, 3)).toBe('Etapa Hecho sigue en la posición 3 de 3')
   })
 
   it('al añadirla dice la posición', () => {

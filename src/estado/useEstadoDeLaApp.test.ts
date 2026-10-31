@@ -365,6 +365,53 @@ describe('Etapas', () => {
     expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
   })
 
+  it('soltar la Etapa la mueve como el menú, retira el aviso y deja el foco en su asa', () => {
+    const { result, crear, borrar } = preparar()
+    crear('Comprar pan')
+    borrar('Comprar pan')
+
+    act(() => result.current.soltarEtapa('hecho', 1))
+
+    expect(nombres(result)).toEqual(['Por hacer', 'Hecho', 'En curso'])
+    expect(guardado()).toEqual(result.current.tablero)
+    expect(result.current.anuncio).toBe('Etapa Hecho movida a la posición 2 de 3')
+    expect(result.current.foco).toEqual({ tipo: 'asa', id: 'hecho' })
+    expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+
+  it('soltar la Etapa en su sitio no cambia nada, pero devuelve el foco y lo dice', () => {
+    const { result, crear, borrar } = preparar()
+    crear('Comprar pan')
+    borrar('Comprar pan')
+    const antes = result.current.tablero
+
+    act(() => result.current.soltarEtapa('hecho', 2))
+
+    expect(result.current.tablero).toBe(antes)
+    expect(result.current.anuncio).toBe('Etapa Hecho sigue en la posición 3 de 3')
+    expect(result.current.foco).toEqual({ tipo: 'asa', id: 'hecho' })
+    expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
+  })
+
+  it('dejar una Etapa sin mover devuelve el foco y lo dice', () => {
+    const { result } = preparar()
+
+    act(() => result.current.dejarEtapa('en-curso'))
+
+    expect(result.current.anuncio).toBe('Etapa En curso sigue en la posición 2 de 3')
+    expect(result.current.foco).toEqual({ tipo: 'asa', id: 'en-curso' })
+  })
+
+  it('dejar una Etapa que ya no existe no anuncia ni pide foco', () => {
+    const { result } = preparar()
+    const { anuncio, foco } = result.current
+
+    act(() => result.current.dejarEtapa('no-existe'))
+
+    expect(result.current.anuncio).toBe(anuncio)
+    expect(result.current.foco).toBe(foco)
+  })
+
   it('borrar ofrece «Deshacer», que la restaura exacta en su posición', () => {
     const { result, crear, idDe } = preparar()
     crear('Regar')

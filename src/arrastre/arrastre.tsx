@@ -1,5 +1,5 @@
-// Arrastre: el único módulo que conoce dnd-kit. Enseña dónde caerá el Pendiente y,
-// al soltar, deja que el Modelo haga el cambio.
+// Arrastre: el único módulo que conoce dnd-kit. Enseña dónde caerá el Pendiente o la
+// Etapa y, al soltar, deja que el Modelo haga el cambio.
 import { CollisionPriority, type Plugins } from '@dnd-kit/abstract'
 import {
   Accessibility,
@@ -11,7 +11,6 @@ import {
 import { move } from '@dnd-kit/helpers'
 import {
   DragDropProvider,
-  useDroppable,
   type DragDropManager,
   type DragEndEvent,
   type DragOverEvent,
@@ -27,9 +26,15 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
-import { anuncioPendienteCogido, anuncioPendienteSobre } from '@/anuncios/anuncios'
+import {
+  anuncioEtapaCogida,
+  anuncioEtapaSobre,
+  anuncioPendienteCogido,
+  anuncioPendienteSobre,
+} from '@/anuncios/anuncios'
 import {
   localizarPendiente,
+  moverEtapa,
   moverPendiente,
   type Pendiente,
   type Tablero,
@@ -73,19 +78,28 @@ type Props = {
   tablero: Tablero
   onSoltar: (pendienteId: string, etapaId: string, indice: number) => void
   onDejar: (pendienteId: string) => void
+  onSoltarEtapa: (etapaId: string, indice: number) => void
+  onDejarEtapa: (etapaId: string) => void
   onAnunciar: (texto: string) => void
   children: (visible: Tablero) => ReactNode
 }
 
-export function ZonaDeArrastre({ tablero, onSoltar, onDejar, onAnunciar, children }: Props) {
-  const [vistaPrevia, setVistaPrevia] = useState<{ tablero: Tablero; pendienteId: string } | null>(
-    null,
-  )
+export function ZonaDeArrastre({
+  tablero,
+  onSoltar,
+  onDejar,
+  onSoltarEtapa,
+  onDejarEtapa,
+  onAnunciar,
+  children,
+}: Props) {
+  // `id` es el del Pendiente o la Etapa que se arrastra.
+  const [vistaPrevia, setVistaPrevia] = useState<{ tablero: Tablero; id: string } | null>(null)
   // `onDragEnd` puede llegar antes de que React pinte la última vista previa.
   const ultima = useRef(tablero)
   const visible = vistaPrevia?.tablero ?? tablero
   const etapaDeDestino = vistaPrevia
-    ? (localizarPendiente(vistaPrevia.tablero, vistaPrevia.pendienteId)?.etapa.id ?? null)
+    ? (localizarPendiente(vistaPrevia.tablero, vistaPrevia.id)?.etapa.id ?? null)
     : null
 
   // La vista previa se basa en un Tablero que ya no existe. Se cancela como lo haría
@@ -97,35 +111,44 @@ export function ZonaDeArrastre({ tablero, onSoltar, onDejar, onAnunciar, childre
   }, [tablero])
 
   function alCoger({ operation }: DragStartEvent) {
-    const pendienteId = String(operation.source?.id)
-    const sitio = localizarPendiente(tablero, pendienteId)
-    if (!sitio) return
-
+    const id = String(operation.source?.id)
     ultima.current = tablero
-    setVistaPrevia({ tablero, pendienteId })
-    onAnunciar(textoDe(anuncioPendienteCogido, sitio))
+    setVistaPrevia({ tablero, id })
+    onAnunciar(anuncioDe(tablero, id, operation.source?.type === 'etapa', 'cogido'))
   }
 
   function alPasar(evento: DragOverEvent, manager: DragDropManager) {
-    const pendienteId = String(evento.operation.source?.id)
+    const { source, target } = evento.operation
+    const id = String(source?.id)
+    // Con la Etapa ya ordenable, dnd-kit metería el Pendiente en la lista de Etapas.
+    if (source?.type === 'pendiente' && target?.type === 'etapa') evento.preventDefault()
+
+    const esEtapa = source?.type === 'etapa'
     const antes = ultima.current
-    const nuevo = tableroAlPasar(antes, pendienteId, evento, manager)
+    const nuevo = esEtapa
+      ? moverEtapa(antes, id, indiceDeEtapa(antes, String(target?.id)))
+      : tableroAlPasar(antes, id, evento, manager)
     if (nuevo === antes) return
 
     ultima.current = nuevo
-    setVistaPrevia({ tablero: nuevo, pendienteId })
-    const sitio = localizarPendiente(nuevo, pendienteId)
-    if (sitio) onAnunciar(textoDe(anuncioPendienteSobre, sitio))
+    setVistaPrevia({ tablero: nuevo, id })
+    onAnunciar(anuncioDe(nuevo, id, esEtapa, 'sobre'))
   }
 
   function alTerminar({ operation, canceled }: DragEndEvent, manager: DragDropManager) {
-    const pendienteId = String(operation.source?.id)
-    const sitio = localizarPendiente(ultima.current, pendienteId)
+    const id = String(operation.source?.id)
+    const final = ultima.current
     setVistaPrevia(null)
 
-    if (canceled || !sitio) onDejar(pendienteId)
-    else onSoltar(pendienteId, sitio.etapa.id, sitio.indice)
-    devolverFocoAlAcabar(manager, pendienteId)
+    if (operation.source?.type === 'etapa') {
+      if (canceled) onDejarEtapa(id)
+      else onSoltarEtapa(id, indiceDeEtapa(final, id))
+    } else {
+      const sitio = localizarPendiente(final, id)
+      if (canceled || !sitio) onDejar(id)
+      else onSoltar(id, sitio.etapa.id, sitio.indice)
+    }
+    devolverFocoAlAcabar(manager, id)
   }
 
   return (
@@ -141,15 +164,16 @@ export function ZonaDeArrastre({ tablero, onSoltar, onDejar, onAnunciar, childre
   )
 }
 
-export function useEtapaReceptora(etapaId: string) {
-  const { ref } = useDroppable({
+export function useEtapaOrdenable(etapaId: string, indice: number) {
+  const { ref, handleRef } = useSortable({
     id: etapaId,
+    index: indice,
     type: 'etapa',
-    accept: 'pendiente',
+    accept: ['pendiente', 'etapa'],
     // Cede ante los Pendientes: si no, el hueco no entraría entre ellos.
     collisionPriority: CollisionPriority.Low,
   })
-  return { ref, esDestino: useContext(EtapaDeDestino) === etapaId }
+  return { ref, handleRef, esDestino: useContext(EtapaDeDestino) === etapaId }
 }
 
 export function usePendienteArrastrable(id: string, indice: number, etapaId: string) {
@@ -171,14 +195,14 @@ export function usePendienteArrastrable(id: string, indice: number, etapaId: str
 }
 
 // dnd-kit recoloca el elemento al acabar y el foco se pierde, salvo que ya esté en otro sitio.
-function devolverFocoAlAcabar(manager: DragDropManager, pendienteId: string) {
+function devolverFocoAlAcabar(manager: DragDropManager, id: string) {
   requestAnimationFrame(function esperar() {
     if (!manager.dragOperation.status.idle) {
       requestAnimationFrame(esperar)
       return
     }
     if (document.activeElement !== document.body) return
-    const boton = manager.registry.draggables.get(pendienteId)?.handle
+    const boton = manager.registry.draggables.get(id)?.handle
     if (boton instanceof HTMLElement) boton.focus()
   })
 }
@@ -209,9 +233,18 @@ function registroDe({ etapas }: Tablero): Record<string, Pendiente[]> {
   return Object.fromEntries(etapas.map(({ id, pendientes }) => [id, pendientes]))
 }
 
-function textoDe(
-  anuncio: (titulo: string, nombreDeEtapa: string, posicion: number, total: number) => string,
-  { etapa, indice, pendiente }: NonNullable<ReturnType<typeof localizarPendiente>>,
-) {
+function indiceDeEtapa({ etapas }: Tablero, etapaId: string) {
+  return etapas.findIndex(({ id }) => id === etapaId)
+}
+
+function anuncioDe(tablero: Tablero, id: string, esEtapa: boolean, momento: 'cogido' | 'sobre') {
+  if (esEtapa) {
+    const anuncio = momento === 'cogido' ? anuncioEtapaCogida : anuncioEtapaSobre
+    const indice = indiceDeEtapa(tablero, id)
+    return anuncio(tablero.etapas[indice].nombre, indice + 1, tablero.etapas.length)
+  }
+
+  const { etapa, indice, pendiente } = localizarPendiente(tablero, id)!
+  const anuncio = momento === 'cogido' ? anuncioPendienteCogido : anuncioPendienteSobre
   return anuncio(pendiente.titulo, etapa.nombre, indice + 1, etapa.pendientes.length)
 }

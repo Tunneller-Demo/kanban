@@ -1,5 +1,6 @@
+import { GripVertical } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
-import { useEtapaReceptora } from '@/arrastre/arrastre'
+import { useEtapaOrdenable } from '@/arrastre/arrastre'
 import {
   MINIMO_DE_ETAPAS,
   type CambiosDePendiente,
@@ -16,6 +17,7 @@ type Props = {
   etapas: DatosEtapa[]
   idAyuda: string
   idAyudaDeNombre: string
+  idAyudaDeAsa: string
   onCrear: (titulo: string) => boolean
   onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
   onBorrar: (pendienteId: string) => void
@@ -34,6 +36,7 @@ export function Etapa({
   etapas,
   idAyuda,
   idAyudaDeNombre,
+  idAyudaDeAsa,
   onCrear,
   onEditar,
   onBorrar,
@@ -52,7 +55,7 @@ export function Etapa({
   const botonCrear = useRef<HTMLButtonElement>(null)
   const devolverFoco = useRef(false)
   const [creando, setCreando] = useState(false)
-  const { ref, esDestino } = useEtapaReceptora(etapa.id)
+  const { ref, handleRef, esDestino } = useEtapaOrdenable(etapa.id, posicion)
 
   // El botón no existe hasta que el campo se cierra.
   useEffect(() => {
@@ -84,6 +87,16 @@ export function Etapa({
           {total}
           <span className="sr-only"> {total === 1 ? 'Pendiente' : 'Pendientes'}</span>
         </span>
+        <button
+          ref={handleRef}
+          data-foco={claveDeFoco({ tipo: 'asa', id: etapa.id })}
+          type="button"
+          aria-label={`Reordenar ${etapa.nombre}`}
+          aria-describedby={idAyudaDeAsa}
+          className="grid size-11 flex-none cursor-grab touch-none place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground carriles:size-8 carriles:pointer-coarse:size-11"
+        >
+          <GripVertical aria-hidden className="size-4" />
+        </button>
         <MenuDeEtapa
           nombre={etapa.nombre}
           totalDePendientes={total}

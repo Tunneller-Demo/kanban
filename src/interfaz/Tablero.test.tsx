@@ -20,6 +20,8 @@ const pintar = (tablero: DatosTablero, props: Partial<Parameters<typeof Tablero>
       onRenombrar={() => {}}
       onMoverEtapaIzquierda={() => {}}
       onMoverEtapaDerecha={() => {}}
+      onSoltarEtapa={() => {}}
+      onDejarEtapa={() => {}}
       onQuitarEtapa={() => {}}
       onAnunciar={() => {}}
       {...props}
@@ -91,6 +93,18 @@ describe('Tablero', () => {
     expect(menu.parentElement).toBe(abrir.parentElement)
     expect(abrir.contains(menu)).toBe(false)
     expect(menu.getAttribute('aria-haspopup')).toBe('menu')
+  })
+})
+
+describe('asa de la Etapa', () => {
+  it('se nombra con la Etapa y explica el teclado como descripción', () => {
+    pintar(tableroDePartida())
+
+    const asa = screen.getByRole('button', { name: 'Reordenar Hecho' })
+
+    expect(descripcion(asa)).toBe(
+      'Espacio coge la Etapa; luego, las flechas la mueven, Intro o Espacio la sueltan y Escape cancela',
+    )
   })
 })
 

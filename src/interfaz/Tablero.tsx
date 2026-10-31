@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
-import { AYUDA_DE_ARRASTRE, AYUDA_DE_NOMBRE } from '@/anuncios/anuncios'
+import { AYUDA_DE_ARRASTRE, AYUDA_DE_ASA, AYUDA_DE_NOMBRE } from '@/anuncios/anuncios'
 import { ZonaDeArrastre } from '@/arrastre/arrastre'
 import type { Foco } from '@/estado/useEstadoDeLaApp'
 import {
@@ -26,6 +26,8 @@ type Props = {
   onRenombrar: (etapaId: string, texto: string) => void
   onMoverEtapaIzquierda: (etapaId: string) => void
   onMoverEtapaDerecha: (etapaId: string) => void
+  onSoltarEtapa: (etapaId: string, indice: number) => void
+  onDejarEtapa: (etapaId: string) => void
   onQuitarEtapa: (etapaId: string) => void
   onAnunciar: (texto: string) => void
 }
@@ -45,12 +47,15 @@ export function Tablero({
   onRenombrar,
   onMoverEtapaIzquierda,
   onMoverEtapaDerecha,
+  onSoltarEtapa,
+  onDejarEtapa,
   onQuitarEtapa,
   onAnunciar,
 }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
   const idAyuda = useId()
   const idAyudaDeNombre = useId()
+  const idAyudaDeAsa = useId()
 
   // El destino puede montarse en el mismo cambio que pide el foco: por eso va tras pintar.
   useEffect(() => {
@@ -65,6 +70,8 @@ export function Tablero({
       tablero={tablero}
       onSoltar={onSoltar}
       onDejar={onDejar}
+      onSoltarEtapa={onSoltarEtapa}
+      onDejarEtapa={onDejarEtapa}
       onAnunciar={onAnunciar}
     >
       {(visible) => (
@@ -78,6 +85,9 @@ export function Tablero({
           <p id={idAyudaDeNombre} hidden>
             {AYUDA_DE_NOMBRE}
           </p>
+          <p id={idAyudaDeAsa} hidden>
+            {AYUDA_DE_ASA}
+          </p>
           {visible.etapas.map((etapa) => (
             <Etapa
               key={etapa.id}
@@ -85,6 +95,7 @@ export function Tablero({
               etapas={visible.etapas}
               idAyuda={idAyuda}
               idAyudaDeNombre={idAyudaDeNombre}
+              idAyudaDeAsa={idAyudaDeAsa}
               onCrear={(titulo) => onCrear(etapa.id, titulo)}
               onEditar={onEditar}
               onBorrar={onBorrar}

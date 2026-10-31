@@ -8,6 +8,7 @@ import {
   anuncioEtapaRenombrada,
   anuncioEtapaRestaurada,
   anuncioEtapaSinCrear,
+  anuncioEtapaSinMover,
   anuncioNombreRecuperado,
   anuncioNombreSinGuardar,
   anuncioPendienteBorrado,
@@ -41,7 +42,7 @@ import {
 import { cargarTablero, guardarTablero } from '@/persistencia/persistencia'
 
 // Cada petición es un objeto nuevo: repetir el mismo destino vuelve a llevar el foco allí.
-export type Foco = { tipo: 'pendiente' | 'crear' | 'etapa'; id: string }
+export type Foco = { tipo: 'pendiente' | 'crear' | 'etapa' | 'asa'; id: string }
 
 // Cualquier cambio retira el aviso, así que `tablero` siempre es justo el estado anterior.
 type Deshacer = {
@@ -195,16 +196,20 @@ export function useEstadoDeLaApp() {
     }
   }
 
-  function desplazarEtapa(etapaId: string, salto: number) {
-    const indice = tablero.etapas.findIndex((etapa) => etapa.id === etapaId)
-    const nuevo = moverEtapa(tablero, etapaId, indice + salto)
-    if (nuevo === tablero) return
+  // Devuelve si se movió. El foco sigue a la Etapa en el control que hizo el movimiento.
+  function aplicarMovimientoDeEtapa(etapaId: string, indice: number, tipo: Foco['tipo']): boolean {
+    const nuevo = moverEtapa(tablero, etapaId, indice)
+    if (nuevo === tablero) return false
 
     aplicar(nuevo)
-    setFoco({ tipo: 'etapa', id: etapaId })
-    anunciar(
-      anuncioEtapaMovida(tablero.etapas[indice].nombre, indice + salto + 1, nuevo.etapas.length),
-    )
+    setFoco({ tipo, id: etapaId })
+    anunciar(anuncioEtapaMovida(nuevo.etapas[indice].nombre, indice + 1, nuevo.etapas.length))
+    return true
+  }
+
+  function desplazarEtapa(etapaId: string, salto: number) {
+    const indice = tablero.etapas.findIndex((etapa) => etapa.id === etapaId)
+    aplicarMovimientoDeEtapa(etapaId, indice + salto, 'etapa')
   }
 
   function moverEtapaIzquierda(etapaId: string) {
@@ -213,6 +218,19 @@ export function useEstadoDeLaApp() {
 
   function moverEtapaDerecha(etapaId: string) {
     desplazarEtapa(etapaId, 1)
+  }
+
+  function soltarEtapa(etapaId: string, indice: number) {
+    if (!aplicarMovimientoDeEtapa(etapaId, indice, 'asa')) dejarEtapa(etapaId)
+  }
+
+  // Arrastre sin cambios: quien lo seguía necesita saber dónde quedó la Etapa.
+  function dejarEtapa(etapaId: string) {
+    const indice = tablero.etapas.findIndex((etapa) => etapa.id === etapaId)
+    if (indice === -1) return
+
+    setFoco({ tipo: 'asa', id: etapaId })
+    anunciar(anuncioEtapaSinMover(tablero.etapas[indice].nombre, indice + 1, tablero.etapas.length))
   }
 
   function quitarEtapa(etapaId: string) {
@@ -269,6 +287,8 @@ export function useEstadoDeLaApp() {
     renombrar,
     moverEtapaIzquierda,
     moverEtapaDerecha,
+    soltarEtapa,
+    dejarEtapa,
     quitarEtapa,
     deshacer,
     cerrarAviso,

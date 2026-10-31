@@ -11,6 +11,9 @@ export const AVISO_SIN_GUARDAR = 'Sin guardar'
 export const AYUDA_DE_ARRASTRE =
   'Intro abre el Pendiente. Espacio lo coge; luego, las flechas lo mueven, Intro o Espacio lo sueltan y Escape cancela'
 
+export const AYUDA_DE_ASA =
+  'Espacio coge la Etapa; luego, las flechas la mueven, Intro o Espacio la sueltan y Escape cancela'
+
 export const AYUDA_DE_NOMBRE = 'Renombrar la Etapa'
 
 export const MOTIVO_SIN_BORRAR_ETAPA = `El Tablero necesita al menos ${MINIMO_DE_ETAPAS} Etapa`
@@ -126,6 +129,18 @@ export function anuncioNombreSinGuardar(exceso: number): string {
 
 export function anuncioEtapaMovida(nombre: string, posicion: number, total: number): string {
   return `Etapa ${nombre} movida a la posición ${posicion} de ${total}`
+}
+
+export function anuncioEtapaCogida(nombre: string, posicion: number, total: number): string {
+  return `Etapa ${nombre} cogida, posición ${posicion} de ${total}`
+}
+
+export function anuncioEtapaSobre(nombre: string, posicion: number, total: number): string {
+  return `Etapa ${nombre} sobre la posición ${posicion} de ${total}`
+}
+
+export function anuncioEtapaSinMover(nombre: string, posicion: number, total: number): string {
+  return `Etapa ${nombre} sigue en la posición ${posicion} de ${total}`
 }
 
 export function avisoEtapaBorrada(nombre: string): string {

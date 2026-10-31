@@ -2,23 +2,37 @@
 // y mantiene el único «Deshacer» disponible.
 import { useState } from 'react'
 import {
+  anuncioEtapaBorrada,
+  anuncioEtapaCreada,
+  anuncioEtapaMovida,
+  anuncioEtapaRenombrada,
+  anuncioEtapaRestaurada,
+  anuncioEtapaSinCrear,
+  anuncioNombreRecuperado,
+  anuncioNombreSinGuardar,
   anuncioPendienteBorrado,
   anuncioPendienteCreado,
   anuncioPendienteMovido,
   anuncioPendienteRestaurado,
   anuncioPendienteSinMover,
   anuncioTituloDemasiadoLargo,
+  avisoEtapaBorrada,
   avisoPendienteBorrado,
 } from '@/anuncios/anuncios'
 import {
   bajarPendiente,
+  borrarEtapa,
   borrarPendiente,
+  crearEtapa,
   crearPendiente,
   editarPendiente,
+  LIMITE_NOMBRE,
   LIMITE_TITULO,
   localizarPendiente,
+  moverEtapa,
   moverPendiente,
   moverPendienteAEtapa,
+  renombrarEtapa,
   subirPendiente,
   tableroDePartida,
   type CambiosDePendiente,
@@ -27,7 +41,7 @@ import {
 import { cargarTablero, guardarTablero } from '@/persistencia/persistencia'
 
 // Cada petición es un objeto nuevo: repetir el mismo destino vuelve a llevar el foco allí.
-export type Foco = { tipo: 'pendiente' | 'crear'; id: string }
+export type Foco = { tipo: 'pendiente' | 'crear' | 'etapa'; id: string }
 
 // Cualquier cambio retira el aviso, así que `tablero` siempre es justo el estado anterior.
 type Deshacer = {
@@ -149,6 +163,79 @@ export function useEstadoDeLaApp() {
     )
   }
 
+  // Devuelve si se creó: el campo solo se cierra entonces.
+  function anadirEtapa(texto: string): boolean {
+    const id = crypto.randomUUID()
+    const nuevo = crearEtapa(tablero, texto, id)
+    if (nuevo === tablero) {
+      const exceso = texto.trim().length - LIMITE_NOMBRE
+      if (exceso > 0) anunciar(anuncioEtapaSinCrear(exceso))
+      return false
+    }
+
+    aplicar(nuevo)
+    setFoco({ tipo: 'crear', id })
+    anunciar(anuncioEtapaCreada(texto.trim(), nuevo.etapas.length))
+    return true
+  }
+
+  function renombrar(etapaId: string, texto: string) {
+    const nombre = texto.trim()
+    const exceso = nombre.length - LIMITE_NOMBRE
+    const anterior = tablero.etapas.find((etapa) => etapa.id === etapaId)?.nombre
+    if (anterior === undefined) return
+
+    if (!nombre) {
+      anunciar(anuncioNombreRecuperado(anterior))
+    } else if (exceso > 0) {
+      anunciar(anuncioNombreSinGuardar(exceso))
+    } else if (nombre !== anterior) {
+      aplicar(renombrarEtapa(tablero, etapaId, nombre))
+      anunciar(anuncioEtapaRenombrada(nombre))
+    }
+  }
+
+  function desplazarEtapa(etapaId: string, salto: number) {
+    const indice = tablero.etapas.findIndex((etapa) => etapa.id === etapaId)
+    const nuevo = moverEtapa(tablero, etapaId, indice + salto)
+    if (nuevo === tablero) return
+
+    aplicar(nuevo)
+    setFoco({ tipo: 'etapa', id: etapaId })
+    anunciar(
+      anuncioEtapaMovida(tablero.etapas[indice].nombre, indice + salto + 1, nuevo.etapas.length),
+    )
+  }
+
+  function moverEtapaIzquierda(etapaId: string) {
+    desplazarEtapa(etapaId, -1)
+  }
+
+  function moverEtapaDerecha(etapaId: string) {
+    desplazarEtapa(etapaId, 1)
+  }
+
+  function quitarEtapa(etapaId: string) {
+    const nuevo = borrarEtapa(tablero, etapaId)
+    if (nuevo === tablero) return
+
+    const indice = tablero.etapas.findIndex((etapa) => etapa.id === etapaId)
+    const { nombre, pendientes } = tablero.etapas[indice]
+    const vecina = tablero.etapas[indice + 1] ?? tablero.etapas[indice - 1]
+    const focoAlCerrar: Foco = { tipo: 'etapa', id: vecina.id }
+
+    aplicar(nuevo)
+    setDeshacerDisponible({
+      tablero,
+      aviso: avisoEtapaBorrada(nombre),
+      anuncioAlDeshacer: anuncioEtapaRestaurada(nombre, indice + 1, tablero.etapas.length),
+      focoAlDeshacer: { tipo: 'etapa', id: etapaId },
+      focoAlCerrar,
+    })
+    setFoco(focoAlCerrar)
+    anunciar(anuncioEtapaBorrada(nombre, pendientes.length))
+  }
+
   function deshacer() {
     if (!deshacerDisponible) return
 
@@ -178,6 +265,11 @@ export function useEstadoDeLaApp() {
     moverA,
     soltar,
     dejar,
+    anadirEtapa,
+    renombrar,
+    moverEtapaIzquierda,
+    moverEtapaDerecha,
+    quitarEtapa,
     deshacer,
     cerrarAviso,
     anunciar,

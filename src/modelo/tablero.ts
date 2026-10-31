@@ -1,7 +1,8 @@
 // Modelo del Tablero: tipos y operaciones puras. No conoce React, el navegador ni dnd-kit.
 
-const MAXIMO_DE_ETAPAS = 8
-const LIMITE_NOMBRE = 30
+export const MINIMO_DE_ETAPAS = 1
+export const MAXIMO_DE_ETAPAS = 8
+export const LIMITE_NOMBRE = 30
 export const LIMITE_TITULO = 120
 export const LIMITE_NOTA = 2000
 
@@ -154,6 +155,45 @@ export function moverPendienteAEtapa(
   return moverPendiente(tablero, pendienteId, etapaId, 0)
 }
 
+// Entra la última. Si el nombre no vale o ya hay 8 Etapas, devuelve el mismo Tablero.
+export function crearEtapa(tablero: Tablero, texto: string, id: string): Tablero {
+  const nombre = texto.trim()
+  if (!esNombreValido(nombre) || tablero.etapas.length >= MAXIMO_DE_ETAPAS) return tablero
+
+  return { etapas: [...tablero.etapas, { id, nombre, pendientes: [] }] }
+}
+
+// Si no cambia nada, el nombre no vale o la Etapa no existe, devuelve el mismo Tablero.
+export function renombrarEtapa(tablero: Tablero, etapaId: string, texto: string): Tablero {
+  const nombre = texto.trim()
+  const actual = tablero.etapas.find((etapa) => etapa.id === etapaId)
+  if (!actual || actual.nombre === nombre || !esNombreValido(nombre)) return tablero
+
+  return {
+    etapas: tablero.etapas.map((etapa) => (etapa === actual ? { ...etapa, nombre } : etapa)),
+  }
+}
+
+// `indice` es la posición final en el Tablero.
+// Si algo no vale o la Etapa ya está ahí, devuelve el mismo Tablero.
+export function moverEtapa(tablero: Tablero, etapaId: string, indice: number): Tablero {
+  const origen = tablero.etapas.findIndex((etapa) => etapa.id === etapaId)
+  const fuera = !Number.isInteger(indice) || indice < 0 || indice >= tablero.etapas.length
+  if (origen === -1 || fuera || indice === origen) return tablero
+
+  const etapas = tablero.etapas.filter((etapa) => etapa.id !== etapaId)
+  etapas.splice(indice, 0, tablero.etapas[origen])
+  return { etapas }
+}
+
+// Se lleva sus Pendientes. Si es la única o no existe, devuelve el mismo Tablero.
+export function borrarEtapa(tablero: Tablero, etapaId: string): Tablero {
+  const etapas = tablero.etapas.filter((etapa) => etapa.id !== etapaId)
+  if (etapas.length === tablero.etapas.length || etapas.length < MINIMO_DE_ETAPAS) return tablero
+
+  return { etapas }
+}
+
 export function localizarPendiente(
   tablero: Tablero,
   pendienteId: string,
@@ -199,13 +239,16 @@ function esTituloValido(titulo: string): boolean {
   return titulo.length > 0 && titulo.length <= LIMITE_TITULO
 }
 
+function esNombreValido(nombre: string): boolean {
+  return nombre.trim().length > 0 && nombre.length <= LIMITE_NOMBRE
+}
+
 function esEtapa(valor: unknown): valor is Etapa {
   return (
     esObjeto(valor) &&
     typeof valor.id === 'string' &&
     typeof valor.nombre === 'string' &&
-    valor.nombre.trim().length > 0 &&
-    valor.nombre.length <= LIMITE_NOMBRE &&
+    esNombreValido(valor.nombre) &&
     Array.isArray(valor.pendientes) &&
     valor.pendientes.every(esPendiente)
   )

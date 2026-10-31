@@ -69,7 +69,7 @@ test('tocar el Tablero con desplazamiento también cierra y devuelve el foco', a
   }
 
   await campo.fill('Comprar pan')
-  await page.getByRole('region', { name: 'Por hacer' }).getByRole('heading').click()
+  await page.getByRole('region', { name: 'Por hacer' }).getByText(/^40/).click()
 
   await expect(campo).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' })).toBeFocused()
@@ -83,7 +83,7 @@ test('salir con Tab cierra sin crear y deja el foco en el control siguiente', as
   await campo.press('Tab')
 
   await expect(campo).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Añadir Pendiente a En curso' })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'En curso', exact: true })).toBeFocused()
   await expect(pendientes(page, 'Por hacer')).toHaveCount(0)
 })
 

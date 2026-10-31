@@ -1,10 +1,21 @@
 // Anuncios: el único punto que genera los textos para el lector de pantalla.
-import type { Etiqueta, Pendiente } from '@/modelo/tablero'
+import {
+  MAXIMO_DE_ETAPAS,
+  MINIMO_DE_ETAPAS,
+  type Etiqueta,
+  type Pendiente,
+} from '@/modelo/tablero'
 
 export const AVISO_SIN_GUARDAR = 'Sin guardar'
 
 export const AYUDA_DE_ARRASTRE =
   'Intro abre el Pendiente. Espacio lo coge; luego, las flechas lo mueven, Intro o Espacio lo sueltan y Escape cancela'
+
+export const AYUDA_DE_NOMBRE = 'Renombrar la Etapa'
+
+export const MOTIVO_SIN_BORRAR_ETAPA = `El Tablero necesita al menos ${MINIMO_DE_ETAPAS} Etapa`
+
+export const MOTIVO_SIN_ANADIR_ETAPA = `El Tablero admite hasta ${MAXIMO_DE_ETAPAS} Etapas`
 
 const NOMBRES_DE_ETIQUETA: Record<Etiqueta, { nombre: string; adjetivo: string }> = {
   rojo: { nombre: 'Rojo', adjetivo: 'roja' },
@@ -91,6 +102,51 @@ export function anuncioCambiosSinGuardar(excesoDeTitulo: number, excesoDeNota: n
 
 export function anuncioTituloRecuperado(titulo: string): string {
   return `Título vacío. Se recupera "${titulo}"`
+}
+
+export function anuncioEtapaCreada(nombre: string, total: number): string {
+  return `Etapa ${nombre} añadida, posición ${total} de ${total}`
+}
+
+export function anuncioEtapaSinCrear(exceso: number): string {
+  return `Etapa sin crear. ${textoDeExceso(exceso)}`
+}
+
+export function anuncioEtapaRenombrada(nombre: string): string {
+  return `Etapa renombrada a ${nombre}`
+}
+
+export function anuncioNombreRecuperado(nombre: string): string {
+  return `Nombre vacío. Se recupera "${nombre}"`
+}
+
+export function anuncioNombreSinGuardar(exceso: number): string {
+  return `Nombre sin guardar. ${textoDeExceso(exceso)}`
+}
+
+export function anuncioEtapaMovida(nombre: string, posicion: number, total: number): string {
+  return `Etapa ${nombre} movida a la posición ${posicion} de ${total}`
+}
+
+export function avisoEtapaBorrada(nombre: string): string {
+  return `Etapa ${nombre} borrada`
+}
+
+export function anuncioEtapaBorrada(nombre: string, pendientes: number): string {
+  const conPendientes = pendientes > 0 ? ` con ${textoDePendientes(pendientes)}` : ''
+  return `${avisoEtapaBorrada(nombre)}${conPendientes}. Deshacer disponible`
+}
+
+export function anuncioEtapaRestaurada(nombre: string, posicion: number, total: number): string {
+  return `Etapa ${nombre} restaurada, posición ${posicion} de ${total}`
+}
+
+export function textoDeConfirmacionDeEtapa(pendientes: number): string {
+  return `${pendientes === 1 ? 'Se borrará' : 'Se borrarán'} ${textoDePendientes(pendientes)}.`
+}
+
+function textoDePendientes(total: number): string {
+  return `${total} ${total === 1 ? 'Pendiente' : 'Pendientes'}`
 }
 
 export function nombreDeEtiqueta(etiqueta: Etiqueta): string {

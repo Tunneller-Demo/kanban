@@ -17,6 +17,11 @@ export function App() {
     moverA,
     soltar,
     dejar,
+    anadirEtapa,
+    renombrar,
+    moverEtapaIzquierda,
+    moverEtapaDerecha,
+    quitarEtapa,
     deshacer,
     cerrarAviso,
     anunciar,
@@ -31,7 +36,8 @@ export function App() {
         </h1>
       </header>
       {/* Solo se desplaza `main`: así el pie queda fijo sin tapar nunca el foco. */}
-      <main className="flex min-h-0 flex-1 flex-col overflow-auto">
+      {/* `relative` hace que recorte también los textos `sr-only`, que van en absoluto. */}
+      <main className="relative flex min-h-0 flex-1 flex-col overflow-auto">
         <Tablero
           tablero={tablero}
           foco={foco}
@@ -43,6 +49,11 @@ export function App() {
           onMoverA={moverA}
           onSoltar={soltar}
           onDejar={dejar}
+          onAnadirEtapa={anadirEtapa}
+          onRenombrar={renombrar}
+          onMoverEtapaIzquierda={moverEtapaIzquierda}
+          onMoverEtapaDerecha={moverEtapaDerecha}
+          onQuitarEtapa={quitarEtapa}
           onAnunciar={anunciar}
         />
       </main>

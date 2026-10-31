@@ -2,13 +2,17 @@
 import { describe, expect, it } from 'vitest'
 import {
   bajarPendiente,
+  borrarEtapa,
   borrarPendiente,
+  crearEtapa,
   crearPendiente,
   editarPendiente,
   esTablero,
   localizarPendiente,
+  moverEtapa,
   moverPendiente,
   moverPendienteAEtapa,
+  renombrarEtapa,
   subirPendiente,
   tableroDePartida,
   type CambiosDePendiente,
@@ -401,6 +405,162 @@ describe('mover Pendientes', () => {
       expect(moverPendienteAEtapa(tablero, 'x', 'en-curso')).toBe(tablero)
       expect(moverPendienteAEtapa(tablero, 'a', 'x')).toBe(tablero)
     })
+  })
+})
+
+describe('operaciones de Etapa', () => {
+  const conEtapas = (total: number): Tablero => ({
+    etapas: Array.from({ length: total }, (_, i) => ({
+      id: `e${i}`,
+      nombre: `Etapa ${i}`,
+      pendientes: [],
+    })),
+  })
+  const nombres = (tablero: Tablero) => tablero.etapas.map((etapa) => etapa.nombre)
+
+  describe('crearEtapa', () => {
+    it('la pone la última y vacía', () => {
+      const nuevo = crearEtapa(tableroDePartida(), 'Revisar', 'r')
+
+      expect(nuevo.etapas[3]).toEqual({ id: 'r', nombre: 'Revisar', pendientes: [] })
+      expect(nombres(nuevo)).toEqual(['Por hacer', 'En curso', 'Hecho', 'Revisar'])
+    })
+
+    it('recorta los espacios de los extremos', () => {
+      expect(crearEtapa(tableroDePartida(), '  Revisar ', 'r').etapas[3].nombre).toBe('Revisar')
+    })
+
+    it('admite nombres repetidos', () => {
+      expect(nombres(crearEtapa(tableroDePartida(), 'Hecho', 'r'))).toEqual([
+        'Por hacer',
+        'En curso',
+        'Hecho',
+        'Hecho',
+      ])
+    })
+
+    it('admite 30 caracteres y rechaza 31', () => {
+      const tablero = tableroDePartida()
+
+      expect(crearEtapa(tablero, 'a'.repeat(30), 'r').etapas).toHaveLength(4)
+      expect(crearEtapa(tablero, 'a'.repeat(31), 'r')).toBe(tablero)
+    })
+
+    it('rechaza un nombre vacío o solo con espacios', () => {
+      const tablero = tableroDePartida()
+
+      expect(crearEtapa(tablero, '', 'r')).toBe(tablero)
+      expect(crearEtapa(tablero, '   ', 'r')).toBe(tablero)
+    })
+
+    it('llega hasta 8 Etapas y no pasa de ahí', () => {
+      const conSiete = conEtapas(7)
+      const conOcho = conEtapas(8)
+
+      expect(crearEtapa(conSiete, 'Otra', 'r').etapas).toHaveLength(8)
+      expect(crearEtapa(conOcho, 'Otra', 'r')).toBe(conOcho)
+    })
+  })
+
+  describe('renombrarEtapa', () => {
+    it('cambia solo el nombre y conserva sus Pendientes', () => {
+      const tablero = crearPendiente(tableroDePartida(), 'hecho', 'Comprar pan', 'a')
+
+      const nuevo = renombrarEtapa(tablero, 'hecho', 'Terminado')
+
+      expect(nuevo.etapas[2]).toEqual({ ...tablero.etapas[2], nombre: 'Terminado' })
+      expect(nombres(nuevo)).toEqual(['Por hacer', 'En curso', 'Terminado'])
+    })
+
+    it('recorta los espacios de los extremos', () => {
+      expect(renombrarEtapa(tableroDePartida(), 'hecho', ' Fin  ').etapas[2].nombre).toBe('Fin')
+    })
+
+    it('admite un nombre repetido', () => {
+      expect(nombres(renombrarEtapa(tableroDePartida(), 'hecho', 'En curso'))).toEqual([
+        'Por hacer',
+        'En curso',
+        'En curso',
+      ])
+    })
+
+    it('admite 30 caracteres y rechaza 31', () => {
+      const tablero = tableroDePartida()
+
+      expect(renombrarEtapa(tablero, 'hecho', 'a'.repeat(30)).etapas[2].nombre).toHaveLength(30)
+      expect(renombrarEtapa(tablero, 'hecho', 'a'.repeat(31))).toBe(tablero)
+    })
+
+    it('devuelve el mismo Tablero si queda vacío, no cambia o la Etapa no existe', () => {
+      const tablero = tableroDePartida()
+
+      expect(renombrarEtapa(tablero, 'hecho', '  ')).toBe(tablero)
+      expect(renombrarEtapa(tablero, 'hecho', ' Hecho ')).toBe(tablero)
+      expect(renombrarEtapa(tablero, 'no-existe', 'Fin')).toBe(tablero)
+    })
+  })
+
+  describe('moverEtapa', () => {
+    it('la deja en la posición pedida, con sus Pendientes', () => {
+      const tablero = crearPendiente(tableroDePartida(), 'hecho', 'Comprar pan', 'a')
+
+      const nuevo = moverEtapa(tablero, 'hecho', 0)
+
+      expect(nombres(nuevo)).toEqual(['Hecho', 'Por hacer', 'En curso'])
+      expect(nuevo.etapas[0]).toEqual(tablero.etapas[2])
+    })
+
+    it('la mueve hacia la derecha', () => {
+      expect(nombres(moverEtapa(tableroDePartida(), 'por-hacer', 1))).toEqual([
+        'En curso',
+        'Por hacer',
+        'Hecho',
+      ])
+    })
+
+    it('devuelve el mismo Tablero si ya está ahí, se sale o la Etapa no existe', () => {
+      const tablero = tableroDePartida()
+
+      expect(moverEtapa(tablero, 'hecho', 2)).toBe(tablero)
+      expect(moverEtapa(tablero, 'por-hacer', -1)).toBe(tablero)
+      expect(moverEtapa(tablero, 'hecho', 3)).toBe(tablero)
+      expect(moverEtapa(tablero, 'hecho', 0.5)).toBe(tablero)
+      expect(moverEtapa(tablero, 'no-existe', 0)).toBe(tablero)
+    })
+  })
+
+  describe('borrarEtapa', () => {
+    it('quita la Etapa con sus Pendientes y deja las demás en orden', () => {
+      const tablero = crearPendiente(tableroDePartida(), 'en-curso', 'Comprar pan', 'a')
+
+      const nuevo = borrarEtapa(tablero, 'en-curso')
+
+      expect(nombres(nuevo)).toEqual(['Por hacer', 'Hecho'])
+      expect(localizarPendiente(nuevo, 'a')).toBeUndefined()
+    })
+
+    it('llega hasta 1 Etapa y no pasa de ahí', () => {
+      const conDos = conEtapas(2)
+      const conUna = conEtapas(1)
+
+      expect(nombres(borrarEtapa(conDos, 'e0'))).toEqual(['Etapa 1'])
+      expect(borrarEtapa(conUna, 'e0')).toBe(conUna)
+    })
+
+    it('devuelve el mismo Tablero si la Etapa no existe', () => {
+      const tablero = tableroDePartida()
+
+      expect(borrarEtapa(tablero, 'no-existe')).toBe(tablero)
+    })
+  })
+
+  it('el resultado de cada operación sigue siendo un Tablero válido', () => {
+    const tablero = crearEtapa(tableroDePartida(), 'Revisar', 'r')
+
+    expect(esTablero(renombrarEtapa(tablero, 'r', 'Fin'))).toBe(true)
+    expect(esTablero(moverEtapa(tablero, 'r', 0))).toBe(true)
+    expect(esTablero(borrarEtapa(tablero, 'r'))).toBe(true)
+    expect(esTablero(tablero)).toBe(true)
   })
 })
 

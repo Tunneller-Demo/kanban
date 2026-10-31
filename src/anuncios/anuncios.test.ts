@@ -2,6 +2,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   anuncioCambiosSinGuardar,
+  anuncioEtapaBorrada,
+  anuncioEtapaCreada,
+  anuncioEtapaMovida,
+  anuncioEtapaRenombrada,
+  anuncioEtapaRestaurada,
+  anuncioEtapaSinCrear,
+  anuncioNombreRecuperado,
+  anuncioNombreSinGuardar,
   anuncioPendienteBorrado,
   anuncioPendienteCogido,
   anuncioPendienteCreado,
@@ -11,9 +19,13 @@ import {
   anuncioPendienteSobre,
   anuncioTituloDemasiadoLargo,
   anuncioTituloRecuperado,
+  avisoEtapaBorrada,
   avisoPendienteBorrado,
+  MOTIVO_SIN_ANADIR_ETAPA,
+  MOTIVO_SIN_BORRAR_ETAPA,
   nombreDeEtiqueta,
   nombreDePendiente,
+  textoDeConfirmacionDeEtapa,
   textoDeExceso,
 } from './anuncios'
 
@@ -91,6 +103,56 @@ describe('anuncioCambiosSinGuardar', () => {
 describe('anuncioTituloRecuperado', () => {
   it('dice qué título vuelve', () => {
     expect(anuncioTituloRecuperado('Comprar pan')).toBe('Título vacío. Se recupera "Comprar pan"')
+  })
+})
+
+describe('anuncios de Etapa', () => {
+  it('al moverla dice la posición con la frase de la Especificación', () => {
+    expect(anuncioEtapaMovida('Hecho', 2, 3)).toBe('Etapa Hecho movida a la posición 2 de 3')
+  })
+
+  it('al añadirla dice la posición', () => {
+    expect(anuncioEtapaCreada('Revisión', 4)).toBe('Etapa Revisión añadida, posición 4 de 4')
+  })
+
+  it('al renombrarla dice el nombre nuevo', () => {
+    expect(anuncioEtapaRenombrada('Revisión')).toBe('Etapa renombrada a Revisión')
+  })
+
+  it('al borrarla dice qué se borró y que se puede deshacer', () => {
+    expect(avisoEtapaBorrada('Hecho')).toBe('Etapa Hecho borrada')
+    expect(anuncioEtapaBorrada('Hecho', 0)).toBe('Etapa Hecho borrada. Deshacer disponible')
+  })
+
+  it('al borrarla dice cuántos Pendientes se fueron con ella', () => {
+    expect(anuncioEtapaBorrada('Hecho', 1)).toBe(
+      'Etapa Hecho borrada con 1 Pendiente. Deshacer disponible',
+    )
+    expect(anuncioEtapaBorrada('Hecho', 3)).toBe(
+      'Etapa Hecho borrada con 3 Pendientes. Deshacer disponible',
+    )
+  })
+
+  it('al restaurarla dice la posición', () => {
+    expect(anuncioEtapaRestaurada('Hecho', 2, 3)).toBe('Etapa Hecho restaurada, posición 2 de 3')
+  })
+
+  it('dice qué nombre vuelve y por qué no se guardó', () => {
+    expect(anuncioNombreRecuperado('Hecho')).toBe('Nombre vacío. Se recupera "Hecho"')
+    expect(anuncioNombreSinGuardar(5)).toBe('Nombre sin guardar. Sobran 5 caracteres')
+    expect(anuncioEtapaSinCrear(1)).toBe('Etapa sin crear. Sobra 1 carácter')
+  })
+})
+
+describe('textos de los límites de Etapas', () => {
+  it('la confirmación dice cuántos Pendientes se borrarán', () => {
+    expect(textoDeConfirmacionDeEtapa(1)).toBe('Se borrará 1 Pendiente.')
+    expect(textoDeConfirmacionDeEtapa(3)).toBe('Se borrarán 3 Pendientes.')
+  })
+
+  it('los motivos citan los límites del Modelo', () => {
+    expect(MOTIVO_SIN_BORRAR_ETAPA).toBe('El Tablero necesita al menos 1 Etapa')
+    expect(MOTIVO_SIN_ANADIR_ETAPA).toBe('El Tablero admite hasta 8 Etapas')
   })
 })
 

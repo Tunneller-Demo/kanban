@@ -1,10 +1,15 @@
 import { useEffect, useId, useRef } from 'react'
-import { AYUDA_DE_ARRASTRE } from '@/anuncios/anuncios'
+import { AYUDA_DE_ARRASTRE, AYUDA_DE_NOMBRE } from '@/anuncios/anuncios'
 import { ZonaDeArrastre } from '@/arrastre/arrastre'
 import type { Foco } from '@/estado/useEstadoDeLaApp'
-import type { CambiosDePendiente, Tablero as DatosTablero } from '@/modelo/tablero'
+import {
+  MAXIMO_DE_ETAPAS,
+  type CambiosDePendiente,
+  type Tablero as DatosTablero,
+} from '@/modelo/tablero'
 import { Etapa } from './Etapa'
 import { claveDeFoco } from './foco'
+import { NuevaEtapa } from './NuevaEtapa'
 
 type Props = {
   tablero: DatosTablero
@@ -17,6 +22,11 @@ type Props = {
   onMoverA: (pendienteId: string, etapaId: string) => void
   onSoltar: (pendienteId: string, etapaId: string, indice: number) => void
   onDejar: (pendienteId: string) => void
+  onAnadirEtapa: (nombre: string) => boolean
+  onRenombrar: (etapaId: string, texto: string) => void
+  onMoverEtapaIzquierda: (etapaId: string) => void
+  onMoverEtapaDerecha: (etapaId: string) => void
+  onQuitarEtapa: (etapaId: string) => void
   onAnunciar: (texto: string) => void
 }
 
@@ -31,10 +41,16 @@ export function Tablero({
   onMoverA,
   onSoltar,
   onDejar,
+  onAnadirEtapa,
+  onRenombrar,
+  onMoverEtapaIzquierda,
+  onMoverEtapaDerecha,
+  onQuitarEtapa,
   onAnunciar,
 }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
   const idAyuda = useId()
+  const idAyudaDeNombre = useId()
 
   // El destino puede montarse en el mismo cambio que pide el foco: por eso va tras pintar.
   useEffect(() => {
@@ -59,21 +75,30 @@ export function Tablero({
           <p id={idAyuda} hidden>
             {AYUDA_DE_ARRASTRE}
           </p>
+          <p id={idAyudaDeNombre} hidden>
+            {AYUDA_DE_NOMBRE}
+          </p>
           {visible.etapas.map((etapa) => (
             <Etapa
               key={etapa.id}
               etapa={etapa}
               etapas={visible.etapas}
               idAyuda={idAyuda}
+              idAyudaDeNombre={idAyudaDeNombre}
               onCrear={(titulo) => onCrear(etapa.id, titulo)}
               onEditar={onEditar}
               onBorrar={onBorrar}
               onSubir={onSubir}
               onBajar={onBajar}
               onMoverA={onMoverA}
+              onRenombrar={(texto) => onRenombrar(etapa.id, texto)}
+              onMoverIzquierda={() => onMoverEtapaIzquierda(etapa.id)}
+              onMoverDerecha={() => onMoverEtapaDerecha(etapa.id)}
+              onQuitar={() => onQuitarEtapa(etapa.id)}
               onAnunciar={onAnunciar}
             />
           ))}
+          <NuevaEtapa llena={visible.etapas.length >= MAXIMO_DE_ETAPAS} onCrear={onAnadirEtapa} />
         </div>
       )}
     </ZonaDeArrastre>

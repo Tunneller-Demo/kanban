@@ -1,20 +1,31 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useEtapaReceptora } from '@/arrastre/arrastre'
-import type { CambiosDePendiente, Etapa as DatosEtapa } from '@/modelo/tablero'
+import {
+  MINIMO_DE_ETAPAS,
+  type CambiosDePendiente,
+  type Etapa as DatosEtapa,
+} from '@/modelo/tablero'
 import { CampoDePendiente } from './CampoDePendiente'
 import { claveDeFoco } from './foco'
+import { MenuDeEtapa } from './MenuDeEtapa'
+import { NombreDeEtapa } from './NombreDeEtapa'
 import { Pendiente } from './Pendiente'
 
 type Props = {
   etapa: DatosEtapa
   etapas: DatosEtapa[]
   idAyuda: string
+  idAyudaDeNombre: string
   onCrear: (titulo: string) => boolean
   onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
   onBorrar: (pendienteId: string) => void
   onSubir: (pendienteId: string) => void
   onBajar: (pendienteId: string) => void
   onMoverA: (pendienteId: string, etapaId: string) => void
+  onRenombrar: (texto: string) => void
+  onMoverIzquierda: () => void
+  onMoverDerecha: () => void
+  onQuitar: () => void
   onAnunciar: (texto: string) => void
 }
 
@@ -22,16 +33,22 @@ export function Etapa({
   etapa,
   etapas,
   idAyuda,
+  idAyudaDeNombre,
   onCrear,
   onEditar,
   onBorrar,
   onSubir,
   onBajar,
   onMoverA,
+  onRenombrar,
+  onMoverIzquierda,
+  onMoverDerecha,
+  onQuitar,
   onAnunciar,
 }: Props) {
   const idEncabezado = useId()
   const total = etapa.pendientes.length
+  const posicion = etapas.findIndex((candidata) => candidata.id === etapa.id)
   const botonCrear = useRef<HTMLButtonElement>(null)
   const devolverFoco = useRef(false)
   const [creando, setCreando] = useState(false)
@@ -57,16 +74,27 @@ export function Etapa({
       className="flex min-w-0 flex-col rounded-[10px] bg-muted p-2.5 data-destino:ring data-destino:ring-primary data-destino:ring-inset carriles:min-h-0 carriles:w-70 carriles:flex-none"
     >
       <header className="flex items-center gap-2">
-        <h2
+        <NombreDeEtapa
           id={idEncabezado}
-          className="min-w-0 flex-1 text-[13px] font-semibold tracking-[.06em] wrap-anywhere text-muted-foreground uppercase"
-        >
-          {etapa.nombre}
-        </h2>
+          nombre={etapa.nombre}
+          idAyuda={idAyudaDeNombre}
+          onRenombrar={onRenombrar}
+        />
         <span className="rounded-sm bg-card px-1.5 py-px font-mono text-xs">
           {total}
           <span className="sr-only"> {total === 1 ? 'Pendiente' : 'Pendientes'}</span>
         </span>
+        <MenuDeEtapa
+          nombre={etapa.nombre}
+          totalDePendientes={total}
+          claveDeFoco={claveDeFoco({ tipo: 'etapa', id: etapa.id })}
+          puedeIrIzquierda={posicion > 0}
+          puedeIrDerecha={posicion < etapas.length - 1}
+          puedeBorrar={etapas.length > MINIMO_DE_ETAPAS}
+          onMoverIzquierda={onMoverIzquierda}
+          onMoverDerecha={onMoverDerecha}
+          onBorrar={onQuitar}
+        />
       </header>
       {creando ? (
         <CampoDePendiente nombreDeEtapa={etapa.nombre} onCrear={onCrear} onCerrar={cerrarCampo} />

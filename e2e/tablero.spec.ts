@@ -58,7 +58,7 @@ test('se ve con Panel nocturno', async ({ page }) => {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(17, 19, 25)')
   await expect(etapa).toHaveCSS('background-color', 'rgb(24, 27, 36)')
   await expect(etapa).toHaveCSS('border-top-color', 'rgb(48, 54, 74)')
-  await expect(nombre).toHaveCSS('text-transform', 'uppercase')
+  await expect(nombre.getByRole('button')).toHaveCSS('text-transform', 'uppercase')
   await expect(nombre).toHaveCSS('font-size', '13px')
   await expect(etapa.getByText('0', { exact: false })).toHaveCSS('font-family', /IBM Plex Mono/)
 })

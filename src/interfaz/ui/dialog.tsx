@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 export const Dialog = DialogPrimitive.Root
 export const DialogTrigger = DialogPrimitive.Trigger
 export const DialogTitle = DialogPrimitive.Title
+export const DialogDescription = DialogPrimitive.Description
 
 // A pantalla casi completa en móvil; centrado y a su medida desde que las Etapas van en fila.
 export function DialogContent({

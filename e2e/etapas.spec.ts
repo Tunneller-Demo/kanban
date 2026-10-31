@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -53,6 +53,8 @@ const elegirConTeclado = async (page: Page, etapa: string, nombre: string) => {
   for (let intento = 0; intento < 4; intento++) {
     if (await destino.evaluate((nodo) => nodo === document.activeElement)) break
     await page.keyboard.press('ArrowDown')
+    // El menú mueve el foco después de la tecla: sin esperar, se pasaría de opción.
+    await page.evaluate(() => new Promise(requestAnimationFrame))
   }
   await expect(destino).toBeFocused()
   await page.keyboard.press('Enter')
@@ -67,9 +69,14 @@ const anuncio = (page: Page) => page.getByRole('status')
 const asaDe = (page: Page, etapa: string) =>
   page.getByRole('button', { name: `Reordenar ${etapa}` })
 
+// En estrecho, de la Etapa vecina solo asoma el borde.
 const centro = async (elemento: Locator) => {
   const area = (await elemento.boundingBox())!
-  return { x: area.x + area.width / 2, y: area.y + area.height / 2 }
+  const ancho = elemento.page().viewportSize()!.width
+  return {
+    x: Math.max(2, Math.min(area.x + area.width / 2, ancho - 2)),
+    y: area.y + area.height / 2,
+  }
 }
 
 const fotogramas = (page: Page) =>
@@ -79,6 +86,7 @@ const fotogramas = (page: Page) =>
 
 // A pasos: dnd-kit mide las colisiones en cada movimiento, y lo hace al pintar el fotograma.
 const arrastrar = async (page: Page, elemento: Locator, destino: Locator) => {
+  await elemento.scrollIntoViewIfNeeded()
   const { x, y } = await centro(elemento)
   await page.mouse.move(x, y)
   await page.mouse.down()
@@ -91,12 +99,6 @@ const arrastrar = async (page: Page, elemento: Locator, destino: Locator) => {
   await fotogramas(page)
   await page.mouse.up()
 }
-
-// En estrecho las Etapas van apiladas.
-const flechaALaEtapaSiguiente = (info: TestInfo) =>
-  info.project.name.endsWith('movil') ? 'ArrowDown' : 'ArrowRight'
-const flechaALaEtapaAnterior = (info: TestInfo) =>
-  info.project.name.endsWith('movil') ? 'ArrowUp' : 'ArrowLeft'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/kanban/')
@@ -299,19 +301,24 @@ test.describe('reordenar solo con teclado', () => {
 
 test.describe('reordenar con el asa', () => {
   test.describe('con ratón', () => {
+    // En estrecho, para medir el asa con el carrusel ya quieto.
+    test.beforeEach(async ({ page }, info) => {
+      if (info.project.name.endsWith('movil')) await page.emulateMedia({ reducedMotion: 'reduce' })
+    })
+
     test('mueve la Etapa con sus Pendientes, lo anuncia y sigue tras recargar', async ({ page }) => {
       await crear(page, 'Hecho', 'Comprar pan')
 
-      await arrastrar(page, asaDe(page, 'Hecho'), page.getByRole('region', { name: 'Por hacer' }))
+      await arrastrar(page, asaDe(page, 'Hecho'), page.getByRole('region', { name: 'En curso' }))
 
-      await expect(titulos(page)).toHaveText([/Hecho/i, /Por hacer/i, /En curso/i])
+      await expect(titulos(page)).toHaveText([/Por hacer/i, /Hecho/i, /En curso/i])
       await expect(page.getByRole('region', { name: 'Hecho' })).toContainText('Comprar pan')
-      await expect(anuncio(page)).toHaveText('Etapa Hecho movida a la posición 1 de 3')
+      await expect(anuncio(page)).toHaveText('Etapa Hecho movida a la posición 2 de 3')
       await expect(asaDe(page, 'Hecho')).toBeFocused()
 
       await page.reload()
 
-      await expect(titulos(page)).toHaveText([/Hecho/i, /Por hacer/i, /En curso/i])
+      await expect(titulos(page)).toHaveText([/Por hacer/i, /Hecho/i, /En curso/i])
     })
 
     test('solo se arrastra desde el asa', async ({ page }) => {
@@ -343,20 +350,25 @@ test.describe('reordenar con el asa', () => {
       await crear(page, 'Por hacer', 'Comprar pan')
       const pendiente = page.getByRole('button', { name: 'Comprar pan', exact: true })
 
-      await arrastrar(page, pendiente, page.getByRole('region', { name: 'Hecho' }))
+      await arrastrar(page, pendiente, page.getByRole('region', { name: 'En curso' }))
 
-      await expect(page.getByRole('region', { name: 'Hecho' })).toContainText('Comprar pan')
+      await expect(page.getByRole('region', { name: 'En curso' })).toContainText('Comprar pan')
       await expect(titulos(page)).toHaveText([/Por hacer/i, /En curso/i, /Hecho/i])
     })
   })
 
   test.describe('con teclado', () => {
-    test('Intro suelta: el foco sigue en el asa y se oye la posición', async ({ page }, info) => {
+    // En estrecho, para coger con el carrusel ya quieto.
+    test.beforeEach(async ({ page }, info) => {
+      if (info.project.name.endsWith('movil')) await page.emulateMedia({ reducedMotion: 'reduce' })
+    })
+
+    test('Intro suelta: el foco sigue en el asa y se oye la posición', async ({ page }) => {
       await asaDe(page, 'Hecho').focus()
 
       await page.keyboard.press('Space')
       await expect(anuncio(page)).toHaveText('Etapa Hecho cogida, posición 3 de 3')
-      await page.keyboard.press(flechaALaEtapaAnterior(info))
+      await page.keyboard.press('ArrowLeft')
       await expect(anuncio(page)).toHaveText('Etapa Hecho sobre la posición 2 de 3')
       await page.keyboard.press('Enter')
 
@@ -365,14 +377,14 @@ test.describe('reordenar con el asa', () => {
       await expect(asaDe(page, 'Hecho')).toBeFocused()
     })
 
-    test('Espacio suelta y las flechas encadenan posiciones', async ({ page }, info) => {
+    test('Espacio suelta y las flechas encadenan posiciones', async ({ page }) => {
       await asaDe(page, 'Por hacer').focus()
 
       await page.keyboard.press('Space')
       await expect(anuncio(page)).toHaveText('Etapa Por hacer cogida, posición 1 de 3')
-      await page.keyboard.press(flechaALaEtapaSiguiente(info))
+      await page.keyboard.press('ArrowRight')
       await expect(anuncio(page)).toHaveText('Etapa Por hacer sobre la posición 2 de 3')
-      await page.keyboard.press(flechaALaEtapaSiguiente(info))
+      await page.keyboard.press('ArrowRight')
       await expect(anuncio(page)).toHaveText('Etapa Por hacer sobre la posición 3 de 3')
       await page.keyboard.press('Space')
 
@@ -381,14 +393,12 @@ test.describe('reordenar con el asa', () => {
       await expect(asaDe(page, 'Por hacer')).toBeFocused()
     })
 
-    test('Escape cancela: la Etapa vuelve a su sitio con el foco en el asa', async ({
-      page,
-    }, info) => {
+    test('Escape cancela: la Etapa vuelve a su sitio con el foco en el asa', async ({ page }) => {
       await asaDe(page, 'Hecho').focus()
 
       await page.keyboard.press('Space')
       await expect(anuncio(page)).toHaveText('Etapa Hecho cogida, posición 3 de 3')
-      await page.keyboard.press(flechaALaEtapaAnterior(info))
+      await page.keyboard.press('ArrowLeft')
       await expect(titulos(page)).toHaveText([/Por hacer/i, /Hecho/i, /En curso/i])
       await page.keyboard.press('Escape')
 
@@ -397,7 +407,7 @@ test.describe('reordenar con el asa', () => {
       await expect(asaDe(page, 'Hecho')).toBeFocused()
     })
 
-    test('si el Tablero cambia durante el arrastre, se cancela', async ({ page }, info) => {
+    test('si el Tablero cambia durante el arrastre, se cancela', async ({ page }) => {
       await crear(page, 'Por hacer', 'Comprar pan')
       await page.getByRole('button', { name: 'Comprar pan', exact: true }).click()
       await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click()
@@ -405,7 +415,7 @@ test.describe('reordenar con el asa', () => {
 
       await page.keyboard.press('Space')
       await expect(anuncio(page)).toHaveText('Etapa Hecho cogida, posición 3 de 3')
-      await page.keyboard.press(flechaALaEtapaAnterior(info))
+      await page.keyboard.press('ArrowLeft')
       await expect(titulos(page)).toHaveText([/Por hacer/i, /Hecho/i, /En curso/i])
       await page.getByRole('contentinfo').getByRole('button', { name: 'Deshacer' }).click()
 
@@ -414,13 +424,13 @@ test.describe('reordenar con el asa', () => {
       await expect(page.locator('[data-dnd-dragging]')).toHaveCount(0)
     })
 
-    test('una Etapa más alta que la pantalla también se mueve', async ({ page }, info) => {
+    test('una Etapa más alta que la pantalla también se mueve', async ({ page }) => {
       await crear(page, 'Por hacer', ...muchos(16))
       await asaDe(page, 'Por hacer').focus()
 
       await page.keyboard.press('Space')
       await expect(anuncio(page)).toHaveText('Etapa Por hacer cogida, posición 1 de 3')
-      await page.keyboard.press(flechaALaEtapaSiguiente(info))
+      await page.keyboard.press('ArrowRight')
 
       await expect(anuncio(page)).toHaveText('Etapa Por hacer sobre la posición 2 de 3')
       await page.keyboard.press('Escape')

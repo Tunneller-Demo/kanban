@@ -7,6 +7,7 @@ import {
   type Etapa as DatosEtapa,
 } from '@/modelo/tablero'
 import { CampoDePendiente } from './CampoDePendiente'
+import { ContadorDePendientes } from './ContadorDePendientes'
 import { claveDeFoco } from './foco'
 import { MenuDeEtapa } from './MenuDeEtapa'
 import { NombreDeEtapa } from './NombreDeEtapa'
@@ -74,7 +75,7 @@ export function Etapa({
       ref={ref}
       aria-labelledby={idEncabezado}
       data-destino={esDestino || undefined}
-      className="flex min-w-0 flex-col rounded-[10px] bg-muted p-2.5 data-destino:ring data-destino:ring-primary data-destino:ring-inset carriles:min-h-0 carriles:w-70 carriles:flex-none"
+      className="flex min-h-0 w-[85vw] flex-none snap-center snap-always flex-col rounded-[10px] bg-muted p-2.5 data-destino:ring data-destino:ring-primary data-destino:ring-inset carriles:w-70"
     >
       <header className="flex items-center gap-2">
         <NombreDeEtapa
@@ -83,10 +84,7 @@ export function Etapa({
           idAyuda={idAyudaDeNombre}
           onRenombrar={onRenombrar}
         />
-        <span className="rounded-sm bg-card px-1.5 py-px font-mono text-xs">
-          {total}
-          <span className="sr-only"> {total === 1 ? 'Pendiente' : 'Pendientes'}</span>
-        </span>
+        <ContadorDePendientes total={total} />
         <button
           ref={handleRef}
           data-foco={claveDeFoco({ tipo: 'asa', id: etapa.id })}
@@ -127,7 +125,7 @@ export function Etapa({
         // El relleno deja sitio al contorno de foco, que el desplazamiento recortaría.
         <ol
           aria-labelledby={idEncabezado}
-          className="-mx-1 mt-1 flex flex-col gap-1.5 p-1 carriles:min-h-0 carriles:flex-1 carriles:overflow-y-auto carriles:overscroll-contain"
+          className="-mx-1 mt-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain p-1"
         >
           {etapa.pendientes.map((pendiente, indice) => (
             <Pendiente

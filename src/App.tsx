@@ -37,30 +37,26 @@ export function App() {
           Tablero de pendientes
         </h1>
       </header>
-      {/* Solo se desplaza `main`: así el pie queda fijo sin tapar nunca el foco. */}
-      {/* `relative` hace que recorte también los textos `sr-only`, que van en absoluto. */}
-      <main className="relative flex min-h-0 flex-1 flex-col overflow-auto">
-        <Tablero
-          tablero={tablero}
-          foco={foco}
-          onCrear={crear}
-          onEditar={editar}
-          onBorrar={borrar}
-          onSubir={subir}
-          onBajar={bajar}
-          onMoverA={moverA}
-          onSoltar={soltar}
-          onDejar={dejar}
-          onAnadirEtapa={anadirEtapa}
-          onRenombrar={renombrar}
-          onMoverEtapaIzquierda={moverEtapaIzquierda}
-          onMoverEtapaDerecha={moverEtapaDerecha}
-          onSoltarEtapa={soltarEtapa}
-          onDejarEtapa={dejarEtapa}
-          onQuitarEtapa={quitarEtapa}
-          onAnunciar={anunciar}
-        />
-      </main>
+      <Tablero
+        tablero={tablero}
+        foco={foco}
+        onCrear={crear}
+        onEditar={editar}
+        onBorrar={borrar}
+        onSubir={subir}
+        onBajar={bajar}
+        onMoverA={moverA}
+        onSoltar={soltar}
+        onDejar={dejar}
+        onAnadirEtapa={anadirEtapa}
+        onRenombrar={renombrar}
+        onMoverEtapaIzquierda={moverEtapaIzquierda}
+        onMoverEtapaDerecha={moverEtapaDerecha}
+        onSoltarEtapa={soltarEtapa}
+        onDejarEtapa={dejarEtapa}
+        onQuitarEtapa={quitarEtapa}
+        onAnunciar={anunciar}
+      />
       <footer className="flex flex-none flex-wrap justify-between gap-x-4 gap-y-1.5 border-t px-4 py-1.5 text-xs text-muted-foreground carriles:px-6">
         {avisoDeDeshacer && (
           <AvisoDeDeshacer texto={avisoDeDeshacer} onDeshacer={deshacer} onCerrar={cerrarAviso} />

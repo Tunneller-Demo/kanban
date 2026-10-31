@@ -34,7 +34,7 @@ export function NuevaEtapa({ llena, onCrear }: Props) {
   }
 
   return (
-    <div className="flex flex-none flex-col carriles:w-70">
+    <div className="flex w-[85vw] flex-none snap-center snap-always flex-col carriles:w-70">
       {creando ? (
         <CampoDeNombre
           etiqueta="Nombre de la nueva Etapa"

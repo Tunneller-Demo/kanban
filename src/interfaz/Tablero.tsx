@@ -10,6 +10,7 @@ import {
 import { Etapa } from './Etapa'
 import { claveDeFoco } from './foco'
 import { NuevaEtapa } from './NuevaEtapa'
+import { PestanasDeEtapa } from './PestanasDeEtapa'
 
 type Props = {
   tablero: DatosTablero
@@ -53,6 +54,7 @@ export function Tablero({
   onAnunciar,
 }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
+  const carrusel = useRef<HTMLElement>(null)
   const idAyuda = useId()
   const idAyudaDeNombre = useId()
   const idAyudaDeAsa = useId()
@@ -75,42 +77,55 @@ export function Tablero({
       onAnunciar={onAnunciar}
     >
       {(visible) => (
-        <div
-          ref={contenedor}
-          className="flex flex-1 flex-col gap-2.5 px-4 pb-4 carriles:min-h-0 carriles:flex-row carriles:px-6"
-        >
-          <p id={idAyuda} hidden>
-            {AYUDA_DE_ARRASTRE}
-          </p>
-          <p id={idAyudaDeNombre} hidden>
-            {AYUDA_DE_NOMBRE}
-          </p>
-          <p id={idAyudaDeAsa} hidden>
-            {AYUDA_DE_ASA}
-          </p>
-          {visible.etapas.map((etapa) => (
-            <Etapa
-              key={etapa.id}
-              etapa={etapa}
-              etapas={visible.etapas}
-              idAyuda={idAyuda}
-              idAyudaDeNombre={idAyudaDeNombre}
-              idAyudaDeAsa={idAyudaDeAsa}
-              onCrear={(titulo) => onCrear(etapa.id, titulo)}
-              onEditar={onEditar}
-              onBorrar={onBorrar}
-              onSubir={onSubir}
-              onBajar={onBajar}
-              onMoverA={onMoverA}
-              onRenombrar={(texto) => onRenombrar(etapa.id, texto)}
-              onMoverIzquierda={() => onMoverEtapaIzquierda(etapa.id)}
-              onMoverDerecha={() => onMoverEtapaDerecha(etapa.id)}
-              onQuitar={() => onQuitarEtapa(etapa.id)}
-              onAnunciar={onAnunciar}
-            />
-          ))}
-          <NuevaEtapa llena={visible.etapas.length >= MAXIMO_DE_ETAPAS} onCrear={onAnadirEtapa} />
-        </div>
+        <>
+          <PestanasDeEtapa etapas={visible.etapas} carrusel={carrusel} />
+          {/* Solo se desplaza `main`: así el pie queda fijo sin tapar nunca el foco. */}
+          {/* `relative` hace que recorte también los textos `sr-only`, que van en absoluto. */}
+          {/* Sin deslizar durante un arrastre: dnd-kit mide justo tras desplazar. */}
+          {/* Sin encajar: al coger una Etapa, WebKit saltaba a la siguiente. */}
+          <main
+            ref={carrusel}
+            className="relative flex min-h-0 flex-1 snap-x snap-mandatory flex-col overflow-auto not-has-data-dnd-dragging:max-carriles:motion-safe:scroll-smooth has-data-dnd-dragging:snap-none max-carriles:overscroll-x-contain carriles:snap-none"
+          >
+            {/* `w-max`: sin él, el margen final no cuenta y la última no se centraría. */}
+            <div
+              ref={contenedor}
+              className="flex min-h-0 flex-1 gap-2.5 px-[7.5vw] pb-4 max-carriles:w-max carriles:px-6"
+            >
+              <p id={idAyuda} hidden>
+                {AYUDA_DE_ARRASTRE}
+              </p>
+              <p id={idAyudaDeNombre} hidden>
+                {AYUDA_DE_NOMBRE}
+              </p>
+              <p id={idAyudaDeAsa} hidden>
+                {AYUDA_DE_ASA}
+              </p>
+              {visible.etapas.map((etapa) => (
+                <Etapa
+                  key={etapa.id}
+                  etapa={etapa}
+                  etapas={visible.etapas}
+                  idAyuda={idAyuda}
+                  idAyudaDeNombre={idAyudaDeNombre}
+                  idAyudaDeAsa={idAyudaDeAsa}
+                  onCrear={(titulo) => onCrear(etapa.id, titulo)}
+                  onEditar={onEditar}
+                  onBorrar={onBorrar}
+                  onSubir={onSubir}
+                  onBajar={onBajar}
+                  onMoverA={onMoverA}
+                  onRenombrar={(texto) => onRenombrar(etapa.id, texto)}
+                  onMoverIzquierda={() => onMoverEtapaIzquierda(etapa.id)}
+                  onMoverDerecha={() => onMoverEtapaDerecha(etapa.id)}
+                  onQuitar={() => onQuitarEtapa(etapa.id)}
+                  onAnunciar={onAnunciar}
+                />
+              ))}
+              <NuevaEtapa llena={visible.etapas.length >= MAXIMO_DE_ETAPAS} onCrear={onAnadirEtapa} />
+            </div>
+          </main>
+        </>
       )}
     </ZonaDeArrastre>
   )

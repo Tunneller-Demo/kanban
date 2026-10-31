@@ -13,7 +13,6 @@ import {
   DragDropProvider,
   type DragDropManager,
   type DragEndEvent,
-  type DragMoveEvent,
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/react'
@@ -27,6 +26,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
+import { flushSync } from 'react-dom'
 import {
   anuncioEtapaCogida,
   anuncioEtapaSobre,
@@ -118,18 +118,13 @@ export function ZonaDeArrastre({
     onAnunciar(anuncioDe(tablero, id, operation.source?.type === 'etapa', 'cogido'))
   }
 
-  // dnd-kit descarta los destinos que no se ven: en estrecho, una Etapa alta oculta a su vecina.
-  function alMover({ operation, by, nativeEvent }: DragMoveEvent, manager: DragDropManager) {
-    if (operation.source?.type !== 'etapa' || !(nativeEvent instanceof KeyboardEvent) || !by) return
-
-    const actual = ultima.current
-    const salto = by.x + by.y > 0 ? 1 : -1
-    const vecina = actual.etapas[indiceDeEtapa(actual, String(operation.source.id)) + salto]
-    const elemento = vecina && manager.registry.droppables.get(vecina.id)?.element
-    elemento?.scrollIntoView({ block: 'nearest' })
-  }
-
   function alPasar(evento: DragOverEvent, manager: DragDropManager) {
+    // Tras `onDragEnd` aún puede llegar un destino: dejaría colgada una vista previa.
+    if (manager.dragOperation.controller?.signal.aborted) {
+      evento.preventDefault()
+      return
+    }
+
     const { source, target } = evento.operation
     const id = String(source?.id)
     // Con la Etapa ya ordenable, dnd-kit colocaría el Pendiente entre las Etapas.
@@ -143,8 +138,11 @@ export function ZonaDeArrastre({
     if (nuevo === antes) return
 
     ultima.current = nuevo
-    setVistaPrevia({ tablero: nuevo, id })
-    onAnunciar(anuncioDe(nuevo, id, esEtapa, 'sobre'))
+    // Con teclado, dnd-kit mide el hueco en cuanto vuelve de aquí: tiene que estar ya pintado.
+    flushSync(() => {
+      setVistaPrevia({ tablero: nuevo, id })
+      onAnunciar(anuncioDe(nuevo, id, esEtapa, 'sobre'))
+    })
   }
 
   function alTerminar({ operation, canceled }: DragEndEvent, manager: DragDropManager) {
@@ -168,7 +166,6 @@ export function ZonaDeArrastre({
       sensors={SENSORES}
       plugins={conPluginsPropios}
       onDragStart={alCoger}
-      onDragMove={alMover}
       onDragOver={alPasar}
       onDragEnd={alTerminar}
     >
@@ -208,15 +205,19 @@ export function usePendienteArrastrable(id: string, indice: number, etapaId: str
 }
 
 // dnd-kit recoloca el elemento al acabar y el foco se pierde, salvo que ya esté en otro sitio.
+// En estrecho, además, el carrusel puede quedarse en una Etapa anterior a la del foco.
 function devolverFocoAlAcabar(manager: DragDropManager, id: string) {
   requestAnimationFrame(function esperar() {
     if (!manager.dragOperation.status.idle) {
       requestAnimationFrame(esperar)
       return
     }
-    if (document.activeElement !== document.body) return
     const boton = manager.registry.draggables.get(id)?.handle
-    if (boton instanceof HTMLElement) boton.focus()
+    if (!(boton instanceof HTMLElement)) return
+    if (document.activeElement === document.body) boton.focus()
+    if (document.activeElement === boton) {
+      boton.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    }
   })
 }
 

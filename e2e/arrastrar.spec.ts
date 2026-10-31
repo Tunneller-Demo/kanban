@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -17,12 +17,17 @@ const pendientes = (page: Page, nombre: string) => etapa(page, nombre).getByRole
 const pendiente = (page: Page, titulo: string) =>
   page.getByRole('button', { name: titulo, exact: true })
 
+// En estrecho, de la Etapa vecina solo asoma el borde.
+const enVentana = (page: Page, x: number) =>
+  Math.max(2, Math.min(x, page.viewportSize()!.width - 2))
+
 const centro = async (elemento: Locator) => {
   const area = (await elemento.boundingBox())!
-  return { x: area.x + area.width / 2, y: area.y + area.height / 2 }
+  return { x: enVentana(elemento.page(), area.x + area.width / 2), y: area.y + area.height / 2 }
 }
 
 const coger = async (page: Page, elemento: Locator) => {
+  await elemento.scrollIntoViewIfNeeded()
   const { x, y } = await centro(elemento)
   await page.mouse.move(x, y)
   await page.mouse.down()
@@ -56,15 +61,16 @@ const arrastrar = async (
   await page.mouse.up()
 }
 
-// En estrecho las Etapas van apiladas.
-const flechaALaSiguienteEtapa = (info: TestInfo) =>
-  info.project.name.endsWith('movil') ? 'ArrowDown' : 'ArrowRight'
-
 test.beforeEach(async ({ page }) => {
   await page.goto('/kanban/')
 })
 
 test.describe('con ratón', () => {
+  // En estrecho, para medir el Pendiente con el carrusel ya quieto.
+  test.beforeEach(async ({ page }, info) => {
+    if (info.project.name.endsWith('movil')) await page.emulateMedia({ reducedMotion: 'reduce' })
+  })
+
   test('reordena dentro de la Etapa, lo anuncia y el foco sigue al Pendiente', async ({ page }) => {
     await crear(page, 'Por hacer', 'Tercero', 'Segundo', 'Primero')
 
@@ -106,16 +112,16 @@ test.describe('con ratón', () => {
   test('acepta una Etapa vacía como destino', async ({ page }) => {
     await crear(page, 'Por hacer', 'Comprar pan')
 
-    await arrastrar(page, pendiente(page, 'Comprar pan'), etapa(page, 'Hecho'))
+    await arrastrar(page, pendiente(page, 'Comprar pan'), etapa(page, 'En curso'))
 
-    await expect(pendientes(page, 'Hecho')).toHaveText(['Comprar pan'])
+    await expect(pendientes(page, 'En curso')).toHaveText(['Comprar pan'])
     await expect(pendientes(page, 'Por hacer')).toHaveCount(0)
   })
 
-  test('soltar en el vacío bajo la lista deja el Pendiente al final', async ({ page }, info) => {
-    test.skip(info.project.name.endsWith('movil'), 'En estrecho la Etapa no tiene vacío')
+  test('soltar en el vacío bajo la lista deja el Pendiente al final', async ({ page }) => {
     await crear(page, 'Por hacer', 'Tercero', 'Segundo', 'Primero')
     await crear(page, 'En curso', 'Pagar', 'Cobrar')
+    await pendiente(page, 'Primero').scrollIntoViewIfNeeded()
     const area = (await etapa(page, 'Por hacer').boundingBox())!
     const fondo = (await pendiente(page, 'Primero').boundingBox())!.y + 140
 
@@ -126,10 +132,11 @@ test.describe('con ratón', () => {
     await expect(pendientes(page, 'Por hacer')).toHaveText(['Primero', 'Tercero', 'Segundo'])
     await expect(page.locator('[data-dnd-dragging]')).toHaveCount(0)
 
+    // Más abajo: en estrecho, a la altura de la lista el fantasma aún la pisa y gana ella.
     const otra = (await etapa(page, 'En curso').boundingBox())!
     await arrastrar(page, pendiente(page, 'Tercero'), page.locator('main'), 0, {
-      x: otra.x + otra.width / 2,
-      y: fondo,
+      x: enVentana(page, otra.x + otra.width / 2),
+      y: fondo + 60,
     })
     await expect(pendientes(page, 'En curso')).toHaveText(['Cobrar', 'Pagar', 'Tercero'])
   })
@@ -230,8 +237,7 @@ test.describe('con ratón', () => {
     await expect(pendientes(page, 'Por hacer')).toHaveCSS('user-select', 'none')
   })
 
-  test('una Etapa larga se desplaza sola al arrastrar', async ({ page, browserName }, info) => {
-    test.skip(info.project.name.endsWith('movil'), 'En estrecho se desplaza `main`')
+  test('una Etapa larga se desplaza sola al arrastrar', async ({ page, browserName }) => {
     const titulos = Array.from({ length: 24 }, (_, indice) => `Pendiente ${indice + 1}`)
     await crear(page, 'Por hacer', ...titulos)
     const lista = etapa(page, 'Por hacer').getByRole('list')
@@ -278,14 +284,14 @@ test.describe('con teclado', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
-  test('las flechas llevan el Pendiente a otra Etapa', async ({ page }, info) => {
+  test('las flechas llevan el Pendiente a otra Etapa', async ({ page }) => {
     await crear(page, 'Por hacer', 'Comprar pan')
     await crear(page, 'En curso', 'Pagar')
     await pendiente(page, 'Comprar pan').focus()
 
     await page.keyboard.press('Space')
     await expect(page.getByRole('status')).toHaveText(/cogido/)
-    await page.keyboard.press(flechaALaSiguienteEtapa(info))
+    await page.keyboard.press('ArrowRight')
     await expect(page.getByRole('status')).toHaveText(/sobre En curso/)
     await page.keyboard.press('Space')
 
@@ -296,14 +302,14 @@ test.describe('con teclado', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
-  test('Escape cancela: nada cambia, el foco vuelve y lo anuncia', async ({ page }, info) => {
+  test('Escape cancela: nada cambia, el foco vuelve y lo anuncia', async ({ page }) => {
     await crear(page, 'Por hacer', 'Comprar pan')
     await crear(page, 'En curso', 'Pagar')
     await pendiente(page, 'Comprar pan').focus()
 
     await page.keyboard.press('Space')
     await expect(page.getByRole('status')).toHaveText(/cogido/)
-    await page.keyboard.press(flechaALaSiguienteEtapa(info))
+    await page.keyboard.press('ArrowRight')
     await expect(page.getByRole('status')).toHaveText(/sobre En curso/)
     await page.keyboard.press('Escape')
 
@@ -315,8 +321,7 @@ test.describe('con teclado', () => {
     await expect(pendiente(page, 'Comprar pan')).toBeFocused()
   })
 
-  test('la flecha abajo sobre el último no lo mueve', async ({ page }, info) => {
-    test.skip(info.project.name.endsWith('movil'), 'En estrecho lo lleva a la Etapa de debajo')
+  test('la flecha abajo sobre el último no lo mueve', async ({ page }) => {
     await crear(page, 'Por hacer', 'Segundo', 'Primero')
     await pendiente(page, 'Segundo').focus()
 
@@ -342,7 +347,7 @@ test.describe('con teclado', () => {
     await expect(pendientes(page, 'Por hacer')).toHaveText(['Primero', 'Segundo'])
   })
 
-  test('tras cancelar porque el Tablero cambia, las teclas vuelven a funcionar', async ({ page }, info) => {
+  test('tras cancelar porque el Tablero cambia, las teclas vuelven a funcionar', async ({ page }) => {
     await crear(page, 'Por hacer', 'Regar', 'Comprar pan')
     await crear(page, 'En curso', 'Pagar')
     await pendiente(page, 'Comprar pan').click()
@@ -351,7 +356,7 @@ test.describe('con teclado', () => {
 
     await page.keyboard.press('Space')
     await expect(page.getByRole('status')).toHaveText(/cogido/)
-    await page.keyboard.press(flechaALaSiguienteEtapa(info))
+    await page.keyboard.press('ArrowRight')
     await expect(page.getByRole('status')).toHaveText(/sobre En curso/)
     await page.getByRole('contentinfo').getByRole('button', { name: 'Deshacer' }).click()
     await expect(page.locator('[data-dnd-dragging]')).toHaveCount(0)
@@ -361,7 +366,7 @@ test.describe('con teclado', () => {
     await expect(page.getByRole('dialog', { name: 'Editar Pendiente' })).toBeVisible()
   })
 
-  test('si el Tablero cambia durante el arrastre, se cancela', async ({ page }, info) => {
+  test('si el Tablero cambia durante el arrastre, se cancela', async ({ page }) => {
     await crear(page, 'Por hacer', 'Regar', 'Comprar pan')
     await crear(page, 'En curso', 'Pagar')
     await pendiente(page, 'Comprar pan').click()
@@ -370,7 +375,7 @@ test.describe('con teclado', () => {
 
     await page.keyboard.press('Space')
     await expect(page.getByRole('status')).toHaveText(/cogido/)
-    await page.keyboard.press(flechaALaSiguienteEtapa(info))
+    await page.keyboard.press('ArrowRight')
     await expect(page.getByRole('status')).toHaveText(/sobre En curso/)
     await page.getByRole('contentinfo').getByRole('button', { name: 'Deshacer' }).click()
 

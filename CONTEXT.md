@@ -22,7 +22,7 @@ _Avoid_: Categoría, tag, prioridad
 
 **Deshacer**:
 Recuperar lo último que la persona ha borrado, tal como estaba. Solo hay uno a la vez y dura hasta el siguiente cambio en el Tablero.
-_Avoid_: Papelera, revertir, restaurar
+_Avoid_: Papelera, revertir
 
 **Copia de seguridad**:
 Un archivo con todo el Tablero, que la persona exporta e importa para conservarlo o pasarlo a otro dispositivo.

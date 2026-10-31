@@ -10,6 +10,9 @@ const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
   await campo.press('Escape')
 }
 
+const muchos = (cuantos: number) =>
+  Array.from({ length: cuantos }, (_, indice) => `Pendiente ${indice + 1}`)
+
 const nombreDe = (page: Page, etapa: string) =>
   page.getByRole('button', { name: etapa, exact: true })
 
@@ -312,11 +315,20 @@ test.describe('reordenar con el asa', () => {
     })
 
     test('solo se arrastra desde el asa', async ({ page }) => {
-      const fondo = page.getByRole('button', { name: 'Añadir Pendiente a Hecho' })
+      const otroControl = page.getByRole('button', { name: 'Añadir Pendiente a Hecho' })
 
-      await arrastrar(page, fondo, page.getByRole('region', { name: 'Por hacer' }))
+      await arrastrar(page, otroControl, page.getByRole('region', { name: 'Por hacer' }))
 
       await expect(titulos(page)).toHaveText([/Por hacer/i, /En curso/i, /Hecho/i])
+    })
+
+    test('no oscila sobre una Etapa mucho más alta', async ({ page }) => {
+      await crear(page, 'Por hacer', ...muchos(8))
+
+      await arrastrar(page, asaDe(page, 'En curso'), page.getByRole('region', { name: 'Por hacer' }))
+
+      await expect(titulos(page)).toHaveText([/En curso/i, /Por hacer/i, /Hecho/i])
+      await expect(anuncio(page)).toHaveText('Etapa En curso movida a la posición 1 de 3')
     })
 
     test('soltarla en su sitio deja el Tablero igual y lo dice', async ({ page }) => {
@@ -383,6 +395,35 @@ test.describe('reordenar con el asa', () => {
       await expect(titulos(page)).toHaveText([/Por hacer/i, /En curso/i, /Hecho/i])
       await expect(anuncio(page)).toHaveText('Etapa Hecho sigue en la posición 3 de 3')
       await expect(asaDe(page, 'Hecho')).toBeFocused()
+    })
+
+    test('si el Tablero cambia durante el arrastre, se cancela', async ({ page }, info) => {
+      await crear(page, 'Por hacer', 'Comprar pan')
+      await page.getByRole('button', { name: 'Comprar pan', exact: true }).click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click()
+      await asaDe(page, 'Hecho').focus()
+
+      await page.keyboard.press('Space')
+      await expect(anuncio(page)).toHaveText('Etapa Hecho cogida, posición 3 de 3')
+      await page.keyboard.press(flechaALaEtapaAnterior(info))
+      await expect(titulos(page)).toHaveText([/Por hacer/i, /Hecho/i, /En curso/i])
+      await page.getByRole('contentinfo').getByRole('button', { name: 'Deshacer' }).click()
+
+      await expect(titulos(page)).toHaveText([/Por hacer/i, /En curso/i, /Hecho/i])
+      await expect(page.getByRole('region', { name: 'Por hacer' })).toContainText('Comprar pan')
+      await expect(page.locator('[data-dnd-dragging]')).toHaveCount(0)
+    })
+
+    test('una Etapa más alta que la pantalla también se mueve', async ({ page }, info) => {
+      await crear(page, 'Por hacer', ...muchos(16))
+      await asaDe(page, 'Por hacer').focus()
+
+      await page.keyboard.press('Space')
+      await expect(anuncio(page)).toHaveText('Etapa Por hacer cogida, posición 1 de 3')
+      await page.keyboard.press(flechaALaEtapaSiguiente(info))
+
+      await expect(anuncio(page)).toHaveText('Etapa Por hacer sobre la posición 2 de 3')
+      await page.keyboard.press('Escape')
     })
   })
 

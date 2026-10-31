@@ -97,6 +97,7 @@
     0 8px 20px rgb(0 0 0 / 50%);
 }
 
+/* Solo el Pendiente: en una Etapa pintaría cada uno de sus hijos por separado. */
 li[data-dnd-dragging]:not([data-dnd-dropping]) > * {
   background-color: var(--card-levantado);
 }

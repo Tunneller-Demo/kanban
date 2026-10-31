@@ -13,6 +13,7 @@ import {
   DragDropProvider,
   type DragDropManager,
   type DragEndEvent,
+  type DragMoveEvent,
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/react'
@@ -117,10 +118,21 @@ export function ZonaDeArrastre({
     onAnunciar(anuncioDe(tablero, id, operation.source?.type === 'etapa', 'cogido'))
   }
 
+  // dnd-kit descarta los destinos que no se ven: en estrecho, una Etapa alta oculta a su vecina.
+  function alMover({ operation, by, nativeEvent }: DragMoveEvent, manager: DragDropManager) {
+    if (operation.source?.type !== 'etapa' || !(nativeEvent instanceof KeyboardEvent) || !by) return
+
+    const actual = ultima.current
+    const salto = by.x + by.y > 0 ? 1 : -1
+    const vecina = actual.etapas[indiceDeEtapa(actual, String(operation.source.id)) + salto]
+    const elemento = vecina && manager.registry.droppables.get(vecina.id)?.element
+    elemento?.scrollIntoView({ block: 'nearest' })
+  }
+
   function alPasar(evento: DragOverEvent, manager: DragDropManager) {
     const { source, target } = evento.operation
     const id = String(source?.id)
-    // Con la Etapa ya ordenable, dnd-kit metería el Pendiente en la lista de Etapas.
+    // Con la Etapa ya ordenable, dnd-kit colocaría el Pendiente entre las Etapas.
     if (source?.type === 'pendiente' && target?.type === 'etapa') evento.preventDefault()
 
     const esEtapa = source?.type === 'etapa'
@@ -156,6 +168,7 @@ export function ZonaDeArrastre({
       sensors={SENSORES}
       plugins={conPluginsPropios}
       onDragStart={alCoger}
+      onDragMove={alMover}
       onDragOver={alPasar}
       onDragEnd={alTerminar}
     >

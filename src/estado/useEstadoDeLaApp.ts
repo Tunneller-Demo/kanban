@@ -197,7 +197,11 @@ export function useEstadoDeLaApp() {
   }
 
   // Devuelve si se movió. El foco sigue a la Etapa en el control que hizo el movimiento.
-  function aplicarMovimientoDeEtapa(etapaId: string, indice: number, tipo: Foco['tipo']): boolean {
+  function aplicarMovimientoDeEtapa(
+    etapaId: string,
+    indice: number,
+    tipo: 'etapa' | 'asa',
+  ): boolean {
     const nuevo = moverEtapa(tablero, etapaId, indice)
     if (nuevo === tablero) return false
 

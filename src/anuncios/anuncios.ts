@@ -43,6 +43,8 @@ export const ANUNCIO_COPIA_IMPORTADA = `${AVISO_COPIA_IMPORTADA}. Deshacer dispo
 
 export const ANUNCIO_TABLERO_ANTERIOR_RECUPERADO = 'Tablero anterior recuperado'
 
+export const ANUNCIO_TABLERO_ACTUALIZADO = 'Tablero actualizado desde otra pestaña'
+
 export const TEXTOS_DE_RECHAZO: Record<MotivoDeRechazo, string> = {
   'no-se-reconoce': 'Este archivo no es una Copia de seguridad del Tablero',
   'version-nueva':

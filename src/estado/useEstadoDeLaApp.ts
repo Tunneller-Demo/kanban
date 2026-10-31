@@ -1,9 +1,10 @@
 // Estado de la app: une el Modelo con la Persistencia, guarda tras cada cambio
 // y mantiene el único «Deshacer» disponible.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ANUNCIO_COPIA_IMPORTADA,
   ANUNCIO_EJEMPLO_ABIERTO,
+  ANUNCIO_TABLERO_ACTUALIZADO,
   ANUNCIO_TABLERO_ANTERIOR_RECUPERADO,
   ANUNCIO_TABLERO_VACIO_ABIERTO,
   ANUNCIO_TABLERO_VACIO_RECUPERADO,
@@ -50,7 +51,12 @@ import {
   type CambiosDePendiente,
   type Tablero,
 } from '@/modelo/tablero'
-import { cargarTablero, guardarTablero, type Carga } from '@/persistencia/persistencia'
+import {
+  cargarTablero,
+  escucharOtrasPestanas,
+  guardarTablero,
+  type Carga,
+} from '@/persistencia/persistencia'
 
 // Cada petición es un objeto nuevo: repetir el mismo destino vuelve a llevar el foco allí.
 export type Foco = { tipo: 'pendiente' | 'crear' | 'etapa' | 'asa'; id: string }
@@ -93,6 +99,21 @@ export function useEstadoDeLaApp() {
   function anunciar(texto: string) {
     setAnuncio(({ orden }) => ({ texto, orden: orden + 1 }))
   }
+
+  // No pasa por `aplicar`: lo recibido ya está guardado y volver a guardarlo rebotaría
+  // entre pestañas. Lo que se ve es lo guardado, así que no quedan fallo ni rescate pendientes.
+  useEffect(
+    () =>
+      escucharOtrasPestanas((guardado) => {
+        setTablero(guardado.tablero)
+        setEjemploIntacto(guardado.ejemploIntacto)
+        setDeshacerDisponible(null)
+        setGuardadoFalla(false)
+        setDatosDanados(null)
+        anunciar(ANUNCIO_TABLERO_ACTUALIZADO)
+      }),
+    [],
+  )
 
   // Devuelve si se creó: el campo solo se vacía entonces.
   function crear(etapaId: string, texto: string): boolean {

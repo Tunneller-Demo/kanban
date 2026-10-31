@@ -1,6 +1,11 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { tableroDeEjemplo, tableroDePartida, type Tablero } from '@/modelo/tablero'
+import {
+  crearPendiente,
+  tableroDeEjemplo,
+  tableroDePartida,
+  type Tablero,
+} from '@/modelo/tablero'
 import { claveDeAlmacenamiento } from '@/persistencia/clave'
 import { guardarTablero } from '@/persistencia/persistencia'
 import { useEstadoDeLaApp } from './useEstadoDeLaApp'
@@ -75,6 +80,106 @@ describe('fallos de guardado', () => {
 
     expect(result.current.tablero).toEqual(importado)
     expect(result.current.guardadoFalla).toBe(true)
+  })
+})
+
+describe('otra pestaña guarda', () => {
+  const deOtraPestana = crearPendiente(tableroDePartida(), 'hecho', 'Regar', 'de-la-otra')
+
+  const llegaDeOtraPestana = (tablero: Tablero, ejemploIntacto = false) =>
+    act(() => {
+      localStorage.setItem(
+        claveDeAlmacenamiento(),
+        JSON.stringify({ version: 1, tablero, ejemploIntacto }),
+      )
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: claveDeAlmacenamiento(),
+          newValue: localStorage.getItem(claveDeAlmacenamiento()),
+        }),
+      )
+    })
+
+  it('muestra ese Tablero con su marca y lo anuncia', () => {
+    const { result } = preparar()
+
+    llegaDeOtraPestana(deOtraPestana, true)
+
+    expect(result.current.tablero).toEqual(deOtraPestana)
+    expect(result.current.ejemploIntacto).toBe(true)
+    expect(result.current.anuncio).toBe('Tablero actualizado desde otra pestaña')
+  })
+
+  it('no vuelve a guardar', () => {
+    preparar()
+    const espia = vi.spyOn(Storage.prototype, 'setItem')
+
+    const evento = new StorageEvent('storage', {
+      key: claveDeAlmacenamiento(),
+      newValue: JSON.stringify({ version: 1, tablero: deOtraPestana, ejemploIntacto: false }),
+    })
+    act(() => void window.dispatchEvent(evento))
+
+    expect(espia).not.toHaveBeenCalled()
+  })
+
+  it('cuenta como cambio: retira el aviso de «Deshacer»', () => {
+    const { result, crear, borrar } = preparar()
+    crear('Comprar pan')
+    borrar('Comprar pan')
+
+    llegaDeOtraPestana(deOtraPestana)
+
+    expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+
+  it('el siguiente cambio parte de lo recibido', () => {
+    const { result, crear, titulos } = preparar()
+
+    llegaDeOtraPestana(deOtraPestana)
+    crear('Comprar pan')
+
+    expect(titulos()).toEqual(['Comprar pan'])
+    expect(result.current.tablero.etapas[2].pendientes[0].titulo).toBe('Regar')
+    expect(guardado()).toEqual(result.current.tablero)
+  })
+
+  it('retira la barra de guardado: lo que se ve ya está guardado', () => {
+    const { result, crear } = preparar()
+    const espia = romperElGuardado()
+    crear('Comprar pan')
+    espia.mockRestore()
+
+    llegaDeOtraPestana(deOtraPestana)
+
+    expect(result.current.guardadoFalla).toBe(false)
+  })
+
+  it('cierra el rescate: los datos dañados ya no existen', () => {
+    localStorage.setItem(claveDeAlmacenamiento(), 'datos dañados')
+    const { result, crear } = preparar()
+
+    llegaDeOtraPestana(deOtraPestana)
+    crear('Comprar pan')
+
+    expect(result.current.datosDanados).toBeNull()
+    expect(guardado()).toEqual(result.current.tablero)
+  })
+
+  it('con datos que no se pueden leer sigue como estaba', () => {
+    const { result, crear, borrar } = preparar()
+    crear('Comprar pan')
+    borrar('Comprar pan')
+    const antes = result.current.tablero
+
+    const evento = new StorageEvent('storage', {
+      key: claveDeAlmacenamiento(),
+      newValue: 'datos dañados',
+    })
+    act(() => void window.dispatchEvent(evento))
+
+    expect(result.current.tablero).toBe(antes)
+    expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
   })
 })
 

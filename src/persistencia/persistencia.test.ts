@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { crearPendiente, tableroDePartida } from '@/modelo/tablero'
 import { claveDeAlmacenamiento } from './clave'
-import { cargarTablero, guardarTablero } from './persistencia'
+import { cargarTablero, escucharOtrasPestanas, guardarTablero } from './persistencia'
 
 const clave = claveDeAlmacenamiento()
 
@@ -79,5 +79,51 @@ describe('guardarTablero', () => {
       tablero: tableroDePartida(),
       ejemploIntacto: false,
     })
+  })
+})
+
+describe('escucharOtrasPestanas', () => {
+  const otraPestanaEscribe = (key: string | null, newValue: string | null) =>
+    window.dispatchEvent(new StorageEvent('storage', { key, newValue }))
+  const guardadoDe = (ejemploIntacto: boolean) =>
+    JSON.stringify({ version: 1, tablero: tableroDePartida(), ejemploIntacto })
+
+  it('entrega el Tablero que guarda otra pestaña, con su marca', () => {
+    const avisar = vi.fn()
+    const dejarDeEscuchar = escucharOtrasPestanas(avisar)
+
+    otraPestanaEscribe(clave, guardadoDe(true))
+    dejarDeEscuchar()
+
+    expect(avisar).toHaveBeenCalledExactlyOnceWith({
+      tipo: 'guardado',
+      tablero: tableroDePartida(),
+      ejemploIntacto: true,
+    })
+  })
+
+  it.each<[string, string | null, string | null]>([
+    ['otra clave', 'otra-clave', guardadoDe(false)],
+    ['un borrado', clave, null],
+    ['localStorage.clear()', null, null],
+    ['un contenido dañado', clave, 'datos dañados'],
+    ['otra versión', clave, JSON.stringify({ version: 2, tablero: tableroDePartida() })],
+  ])('ignora %s', (_, key, newValue) => {
+    const avisar = vi.fn()
+    const dejarDeEscuchar = escucharOtrasPestanas(avisar)
+
+    otraPestanaEscribe(key, newValue)
+    dejarDeEscuchar()
+
+    expect(avisar).not.toHaveBeenCalled()
+  })
+
+  it('tras darse de baja no avisa', () => {
+    const avisar = vi.fn()
+    escucharOtrasPestanas(avisar)()
+
+    otraPestanaEscribe(clave, guardadoDe(false))
+
+    expect(avisar).not.toHaveBeenCalled()
   })
 })

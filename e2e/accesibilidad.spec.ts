@@ -1,13 +1,5 @@
-import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
-import { abrirTableroVacio } from './ayudas'
-
-const infracciones = async (page: Page) => {
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze()
-  return violations
-}
+import { expect, test } from '@playwright/test'
+import { abrirTableroVacio, infracciones } from './ayudas'
 
 test('el Tablero no tiene infracciones de WCAG A y AA', async ({ page }) => {
   await abrirTableroVacio(page)

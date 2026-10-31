@@ -1,5 +1,8 @@
+import { useRef } from 'react'
 import { useEstadoDeLaApp } from '@/estado/useEstadoDeLaApp'
 import { AvisoDeDeshacer } from '@/interfaz/AvisoDeDeshacer'
+import { CopiaDeSeguridad } from '@/interfaz/CopiaDeSeguridad'
+import { Importacion } from '@/interfaz/Importacion'
 import { InvitacionDeTableroVacio } from '@/interfaz/InvitacionDeTableroVacio'
 import { Tablero } from '@/interfaz/Tablero'
 import { Vaciar } from '@/interfaz/Vaciar'
@@ -30,11 +33,14 @@ export function App() {
     quitarEtapa,
     vaciar,
     verEjemplo,
+    importar,
     deshacer,
     cerrarAviso,
     anunciar,
   } = useEstadoDeLaApp()
+  const entradaDeArchivo = useRef<HTMLInputElement>(null)
   const totalDePendientes = contarPendientes(tablero)
+  const elegirArchivo = () => entradaDeArchivo.current?.click()
 
   return (
     <div className="flex h-dvh flex-col">
@@ -49,7 +55,9 @@ export function App() {
           onVaciar={vaciar}
         />
       </header>
-      {totalDePendientes === 0 && <InvitacionDeTableroVacio onVerEjemplo={verEjemplo} />}
+      {totalDePendientes === 0 && (
+        <InvitacionDeTableroVacio onVerEjemplo={verEjemplo} onElegirArchivo={elegirArchivo} />
+      )}
       <Tablero
         tablero={tablero}
         foco={foco}
@@ -70,13 +78,26 @@ export function App() {
         onQuitarEtapa={quitarEtapa}
         onAnunciar={anunciar}
       />
-      <footer className="flex flex-none flex-wrap justify-between gap-x-4 gap-y-1.5 border-t px-4 py-1.5 text-xs text-muted-foreground carriles:px-6">
+      <footer className="flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-1.5 border-t px-4 py-1.5 text-xs text-muted-foreground carriles:px-6">
         {avisoDeDeshacer && (
           <AvisoDeDeshacer texto={avisoDeDeshacer} onDeshacer={deshacer} onCerrar={cerrarAviso} />
         )}
-        <p>Tus datos se guardan solo en este navegador</p>
+        <div className="flex flex-wrap items-center gap-x-3">
+          <p>Tus datos se guardan solo en este navegador</p>
+          <CopiaDeSeguridad
+            tablero={tablero}
+            onElegirArchivo={elegirArchivo}
+            onAnunciar={anunciar}
+          />
+        </div>
         <p>Construida con Tunneller</p>
       </footer>
+      <Importacion
+        entrada={entradaDeArchivo}
+        tablero={tablero}
+        ejemploIntacto={ejemploIntacto}
+        onImportar={importar}
+      />
       <div role="status" aria-live="polite" className="sr-only">
         <span key={ordenDeAnuncio}>{anuncio}</span>
       </div>

@@ -25,6 +25,16 @@ Pásala en un Android y en un iPhone. **iPhone sigue sin probarse: un fallo all�
 | El asa de puntos reordena las Etapas con el dedo                                                                 | [ ]     | [ ]    |
 | Con movimiento reducido en el sistema, el Pendiente sigue al dedo y soltar es instantáneo                        | [ ]     | [ ]    |
 
+## Copia de seguridad en dispositivos reales
+
+El selector de archivos y la carpeta de descargas son del sistema: las pruebas los simulan.
+
+| Comprobación                                                                     | Android | iPhone |
+| -------------------------------------------------------------------------------- | ------- | ------ |
+| «Exportar» deja el archivo donde la persona puede encontrarlo, con su nombre     | [ ]     | [ ]    |
+| «Importar» deja elegir ese archivo y el Tablero queda igual que al exportarlo    | [ ]     | [ ]    |
+| Cancelar el selector de archivos no cambia nada y el foco vuelve al enlace       | [ ]     | [ ]    |
+
 ## Lector de pantalla
 
 Por definir.

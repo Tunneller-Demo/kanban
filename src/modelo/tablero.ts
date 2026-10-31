@@ -283,6 +283,10 @@ export function esTablero(valor: unknown): valor is Tablero {
   return sinRepetidos(etapas) && sinRepetidos(pendientes)
 }
 
+export function esObjeto(valor: unknown): valor is Record<string, unknown> {
+  return typeof valor === 'object' && valor !== null
+}
+
 function desplazarPendiente(tablero: Tablero, pendienteId: string, salto: number): Tablero {
   const sitio = localizarPendiente(tablero, pendienteId)
   if (!sitio) return tablero
@@ -335,10 +339,6 @@ function esPendiente(valor: unknown): valor is Pendiente {
       (typeof valor.nota === 'string' && valor.nota.length <= LIMITE_NOTA)) &&
     (valor.etiqueta === undefined || ETIQUETAS.includes(valor.etiqueta as Etiqueta))
   )
-}
-
-function esObjeto(valor: unknown): valor is Record<string, unknown> {
-  return typeof valor === 'object' && valor !== null
 }
 
 function sinRepetidos(elementos: { id: string }[]): boolean {

@@ -1,6 +1,7 @@
 import { Eraser } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import { MOTIVO_SIN_VACIAR, textoDeConfirmacionDeVaciar } from '@/anuncios/anuncios'
+import { estiloDeBoton, estiloDeTitulo } from './estilos'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
 
 type Props = {
@@ -8,9 +9,6 @@ type Props = {
   ejemploIntacto: boolean
   onVaciar: () => void
 }
-
-const estiloDeBoton =
-  'flex min-h-11 items-center gap-1.5 rounded-md border border-input px-2.5 text-sm hover:bg-muted carriles:min-h-8'
 
 export function Vaciar({ totalDePendientes, ejemploIntacto, onVaciar }: Props) {
   const idMotivo = useId()
@@ -63,9 +61,7 @@ export function Vaciar({ totalDePendientes, ejemploIntacto, onVaciar }: Props) {
             }
           }}
         >
-          <DialogTitle className="flex min-h-7 items-center pr-10 text-[15px] font-semibold">
-            Vaciar el Tablero
-          </DialogTitle>
+          <DialogTitle className={estiloDeTitulo}>Vaciar el Tablero</DialogTitle>
           <DialogDescription className="text-sm">
             {textoDeConfirmacionDeVaciar(totalDePendientes)}
           </DialogDescription>

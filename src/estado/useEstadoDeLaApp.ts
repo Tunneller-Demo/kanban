@@ -2,7 +2,9 @@
 // y mantiene el único «Deshacer» disponible.
 import { useState } from 'react'
 import {
+  ANUNCIO_COPIA_IMPORTADA,
   ANUNCIO_EJEMPLO_ABIERTO,
+  ANUNCIO_TABLERO_ANTERIOR_RECUPERADO,
   ANUNCIO_TABLERO_VACIO_RECUPERADO,
   anuncioEtapaBorrada,
   anuncioEtapaCreada,
@@ -20,6 +22,7 @@ import {
   anuncioPendienteSinMover,
   anuncioTableroVaciado,
   anuncioTituloDemasiadoLargo,
+  AVISO_COPIA_IMPORTADA,
   AVISO_EJEMPLO_ABIERTO,
   avisoEtapaBorrada,
   avisoPendienteBorrado,
@@ -280,7 +283,7 @@ export function useEstadoDeLaApp() {
     if (contarPendientes(tablero) > 0) return
 
     const ejemplo = tableroDeEjemplo()
-    const focoAlCerrar: Foco = { tipo: 'pendiente', id: ejemplo.etapas[0].pendientes[0].id }
+    const focoAlCerrar = focoInicial(ejemplo)
 
     aplicar(ejemplo, true)
     setDeshacerDisponible({
@@ -292,6 +295,21 @@ export function useEstadoDeLaApp() {
     })
     setFoco(focoAlCerrar)
     anunciar(ANUNCIO_EJEMPLO_ABIERTO)
+  }
+
+  function importar(nuevo: Tablero) {
+    const focoAlCerrar = focoInicial(nuevo)
+
+    aplicar(nuevo)
+    setDeshacerDisponible({
+      tablero,
+      aviso: AVISO_COPIA_IMPORTADA,
+      anuncioAlDeshacer: ANUNCIO_TABLERO_ANTERIOR_RECUPERADO,
+      focoAlDeshacer: focoInicial(tablero),
+      focoAlCerrar,
+    })
+    setFoco(focoAlCerrar)
+    anunciar(ANUNCIO_COPIA_IMPORTADA)
   }
 
   function deshacer() {
@@ -333,10 +351,18 @@ export function useEstadoDeLaApp() {
     quitarEtapa,
     vaciar,
     verEjemplo,
+    importar,
     deshacer,
     cerrarAviso,
     anunciar,
   }
+}
+
+function focoInicial(tablero: Tablero): Foco {
+  const primero = tablero.etapas.flatMap((etapa) => etapa.pendientes)[0]
+  return primero
+    ? { tipo: 'pendiente', id: primero.id }
+    : { tipo: 'crear', id: tablero.etapas[0].id }
 }
 
 function tableroInicial(carga: Carga): Tablero {

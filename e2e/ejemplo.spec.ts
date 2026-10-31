@@ -1,13 +1,5 @@
-import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
-import { abrirTableroVacio } from './ayudas'
-
-const infracciones = async (page: Page) => {
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze()
-  return violations
-}
+import { abrirTableroVacio, infracciones } from './ayudas'
 
 const etapa = (page: Page, nombre: string) => page.getByRole('region', { name: nombre })
 const vaciar = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Vaciar' })

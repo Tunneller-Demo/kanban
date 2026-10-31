@@ -1,9 +1,12 @@
 // Anuncios: el único punto que genera los textos para el lector de pantalla.
+import type { MotivoDeRechazo } from '@/copia/copia'
 import {
+  contarPendientes,
   MAXIMO_DE_ETAPAS,
   MINIMO_DE_ETAPAS,
   type Etiqueta,
   type Pendiente,
+  type Tablero,
 } from '@/modelo/tablero'
 
 export const AVISO_SIN_GUARDAR = 'Sin guardar'
@@ -27,6 +30,21 @@ export const AVISO_EJEMPLO_ABIERTO = 'Tablero de ejemplo abierto'
 export const ANUNCIO_EJEMPLO_ABIERTO = `${AVISO_EJEMPLO_ABIERTO}. Deshacer disponible`
 
 export const ANUNCIO_TABLERO_VACIO_RECUPERADO = 'Tablero vacío recuperado'
+
+export const ANUNCIO_COPIA_EXPORTADA = 'Copia de seguridad exportada'
+
+export const AVISO_COPIA_IMPORTADA = 'Copia de seguridad importada'
+
+export const ANUNCIO_COPIA_IMPORTADA = `${AVISO_COPIA_IMPORTADA}. Deshacer disponible`
+
+export const ANUNCIO_TABLERO_ANTERIOR_RECUPERADO = 'Tablero anterior recuperado'
+
+export const TEXTOS_DE_RECHAZO: Record<MotivoDeRechazo, string> = {
+  'no-se-reconoce': 'Este archivo no es una Copia de seguridad del Tablero',
+  'version-nueva':
+    'Esta copia es de una versión más nueva de la app. Recarga la página y vuelve a intentarlo',
+  danado: 'La copia está dañada y no se puede importar. Tu Tablero no ha cambiado',
+}
 
 const NOMBRES_DE_ETIQUETA: Record<Etiqueta, { nombre: string; adjetivo: string }> = {
   rojo: { nombre: 'Rojo', adjetivo: 'roja' },
@@ -176,6 +194,18 @@ export function anuncioTableroVaciado(pendientes: number): string {
 export function textoDeConfirmacionDeVaciar(pendientes: number): string {
   const seBorraran = pendientes === 1 ? 'Se borrará' : 'Se borrarán'
   return `${seBorraran} ${textoDePendientes(pendientes)} y no se podrá deshacer. Las Etapas se conservan.`
+}
+
+export function textoDeConfirmacionDeImportar(actual: Tablero, nuevo: Tablero): string {
+  const pendientes = contarPendientes(actual)
+  const seReemplazara = pendientes === 1 ? 'Se reemplazará tu' : 'Se reemplazarán tus'
+  return `${seReemplazara} ${textoDeContenido(actual)} por ${textoDeContenido(nuevo)}`
+}
+
+function textoDeContenido(tablero: Tablero): string {
+  const etapas = tablero.etapas.length
+  const textoDeEtapas = `${etapas} ${etapas === 1 ? 'Etapa' : 'Etapas'}`
+  return `${textoDePendientes(contarPendientes(tablero))} en ${textoDeEtapas}`
 }
 
 function textoDePendientes(total: number): string {

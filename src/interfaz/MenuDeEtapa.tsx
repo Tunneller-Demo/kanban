@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, EllipsisVertical, Trash2 } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import { MOTIVO_SIN_BORRAR_ETAPA, textoDeConfirmacionDeEtapa } from '@/anuncios/anuncios'
+import { estiloDeBoton, estiloDeTitulo } from './estilos'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
 import {
   DropdownMenu,
@@ -22,9 +23,6 @@ type Props = {
   onMoverDerecha: () => void
   onBorrar: () => void
 }
-
-const estiloDeBoton =
-  'flex min-h-11 items-center gap-1.5 rounded-md border border-input px-2.5 text-sm hover:bg-muted carriles:min-h-8'
 
 export function MenuDeEtapa({
   nombre,
@@ -98,7 +96,7 @@ export function MenuDeEtapa({
           className="carriles:max-w-sm"
           onCloseAutoFocus={() => disparador.current?.focus()}
         >
-          <DialogTitle className="flex min-h-7 items-center pr-10 text-[15px] font-semibold wrap-anywhere">
+          <DialogTitle className={`${estiloDeTitulo} wrap-anywhere`}>
             {`Borrar la Etapa ${nombre}`}
           </DialogTitle>
           <DialogDescription className="text-sm">

@@ -19,6 +19,7 @@ import {
   anuncioPendienteMovido,
   anuncioPendienteRestaurado,
   anuncioTableroVaciado,
+  textoDeConfirmacionDeImportar,
   textoDeConfirmacionDeVaciar,
   anuncioPendienteSinMover,
   anuncioPendienteSobre,
@@ -179,6 +180,31 @@ describe('textos de Vaciar', () => {
     )
     expect(textoDeConfirmacionDeVaciar(3)).toBe(
       'Se borrarán 3 Pendientes y no se podrá deshacer. Las Etapas se conservan.',
+    )
+  })
+})
+
+describe('textoDeConfirmacionDeImportar', () => {
+  const tablero = (etapas: number, pendientes: number) => ({
+    etapas: Array.from({ length: etapas }, (_, indice) => ({
+      id: `etapa-${indice}`,
+      nombre: 'Etapa',
+      pendientes:
+        indice === 0
+          ? Array.from({ length: pendientes }, (_, orden) => ({ id: `${orden}`, titulo: 'Pan' }))
+          : [],
+    })),
+  })
+
+  it('da las cifras de lo que se reemplaza y de lo que entra', () => {
+    expect(textoDeConfirmacionDeImportar(tablero(3, 12), tablero(4, 20))).toBe(
+      'Se reemplazarán tus 12 Pendientes en 3 Etapas por 20 Pendientes en 4 Etapas',
+    )
+  })
+
+  it('usa el singular con un Pendiente y una Etapa', () => {
+    expect(textoDeConfirmacionDeImportar(tablero(1, 1), tablero(1, 1))).toBe(
+      'Se reemplazará tu 1 Pendiente en 1 Etapa por 1 Pendiente en 1 Etapa',
     )
   })
 })

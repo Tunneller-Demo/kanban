@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { tableroDeEjemplo, tableroDePartida } from '@/modelo/tablero'
+import { tableroDeEjemplo, tableroDePartida, type Tablero } from '@/modelo/tablero'
 import { claveDeAlmacenamiento } from '@/persistencia/clave'
 import { guardarTablero } from '@/persistencia/persistencia'
 import { useEstadoDeLaApp } from './useEstadoDeLaApp'
@@ -234,6 +234,68 @@ describe('Ver el Tablero de ejemplo', () => {
 
     expect(result.current.tablero).toBe(antes)
     expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+})
+
+describe('importar una Copia de seguridad', () => {
+  const importado = (): Tablero => ({
+    etapas: [
+      { id: 'a', nombre: 'Sin empezar', pendientes: [] },
+      { id: 'b', nombre: 'Terminado', pendientes: [{ id: 'c', titulo: 'Regar' }] },
+    ],
+  })
+
+  it('reemplaza el Tablero entero y lo guarda', () => {
+    const { result, crear } = preparar()
+    crear('Comprar pan')
+
+    act(() => result.current.importar(importado()))
+
+    expect(result.current.tablero).toEqual(importado())
+    expect(guardado()).toEqual(importado())
+  })
+
+  it('anuncia el resultado, ofrece «Deshacer» y deja el foco en el primer Pendiente', () => {
+    const { result } = preparar()
+
+    act(() => result.current.importar(importado()))
+
+    expect(result.current.avisoDeDeshacer).toBe('Copia de seguridad importada')
+    expect(result.current.anuncio).toBe('Copia de seguridad importada. Deshacer disponible')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id: 'c' })
+  })
+
+  it('sin Pendientes deja el foco en crear de la primera Etapa', () => {
+    const { result, crear } = preparar()
+    crear('Comprar pan')
+
+    act(() => result.current.importar({ etapas: [{ id: 'a', nombre: 'Hoy', pendientes: [] }] }))
+
+    expect(result.current.foco).toEqual({ tipo: 'crear', id: 'a' })
+  })
+
+  it('«Deshacer» recupera el Tablero anterior y lo anuncia', () => {
+    const { result, crear, idDe } = preparar()
+    crear('Comprar pan')
+    const antes = result.current.tablero
+
+    act(() => result.current.importar(importado()))
+    act(() => result.current.deshacer())
+
+    expect(result.current.tablero).toEqual(antes)
+    expect(guardado()).toEqual(antes)
+    expect(result.current.anuncio).toBe('Tablero anterior recuperado')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id: idDe('Comprar pan') })
+  })
+
+  it('cuenta como un cambio: el Tablero de ejemplo deja de estar intacto', () => {
+    localStorage.clear()
+    const { result } = preparar()
+
+    act(() => result.current.importar(importado()))
+
+    expect(result.current.ejemploIntacto).toBe(false)
+    expect(marcaGuardada()).toBe(false)
   })
 })
 

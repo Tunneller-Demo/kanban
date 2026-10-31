@@ -21,7 +21,7 @@ Un color opcional con el que la persona distingue un Pendiente de un vistazo.
 _Avoid_: Categoría, tag, prioridad
 
 **Deshacer**:
-Recuperar lo último que la persona ha borrado, tal como estaba. Solo hay uno a la vez y dura hasta el siguiente cambio en el Tablero.
+Recuperar lo último que la persona ha borrado o reemplazado, tal como estaba. Solo hay uno a la vez y dura hasta el siguiente cambio en el Tablero.
 _Avoid_: Papelera, revertir
 
 **Copia de seguridad**:

@@ -6,13 +6,27 @@ import { Pendiente } from './Pendiente'
 
 type Props = {
   etapa: DatosEtapa
+  etapas: DatosEtapa[]
   onCrear: (titulo: string) => boolean
   onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
   onBorrar: (pendienteId: string) => void
+  onSubir: (pendienteId: string) => void
+  onBajar: (pendienteId: string) => void
+  onMoverA: (pendienteId: string, etapaId: string) => void
   onAnunciar: (texto: string) => void
 }
 
-export function Etapa({ etapa, onCrear, onEditar, onBorrar, onAnunciar }: Props) {
+export function Etapa({
+  etapa,
+  etapas,
+  onCrear,
+  onEditar,
+  onBorrar,
+  onSubir,
+  onBajar,
+  onMoverA,
+  onAnunciar,
+}: Props) {
   const idEncabezado = useId()
   const total = etapa.pendientes.length
   const botonCrear = useRef<HTMLButtonElement>(null)
@@ -64,12 +78,19 @@ export function Etapa({ etapa, onCrear, onEditar, onBorrar, onAnunciar }: Props)
       )}
       {total > 0 && (
         <ol aria-labelledby={idEncabezado} className="mt-2 flex flex-col gap-1.5">
-          {etapa.pendientes.map((pendiente) => (
+          {etapa.pendientes.map((pendiente, indice) => (
             <Pendiente
               key={pendiente.id}
               pendiente={pendiente}
+              etapas={etapas}
+              etapaId={etapa.id}
+              puedeSubir={indice > 0}
+              puedeBajar={indice < total - 1}
               onEditar={(cambios) => onEditar(pendiente.id, cambios)}
               onBorrar={() => onBorrar(pendiente.id)}
+              onSubir={() => onSubir(pendiente.id)}
+              onBajar={() => onBajar(pendiente.id)}
+              onMoverA={(etapaId) => onMoverA(pendiente.id, etapaId)}
               onAnunciar={onAnunciar}
             />
           ))}

@@ -4,6 +4,7 @@ import {
   anuncioCambiosSinGuardar,
   anuncioPendienteBorrado,
   anuncioPendienteCreado,
+  anuncioPendienteMovido,
   anuncioPendienteRestaurado,
   anuncioTituloDemasiadoLargo,
   anuncioTituloRecuperado,
@@ -39,6 +40,14 @@ describe('anuncioPendienteRestaurado', () => {
   it('dice el título, la Etapa y la posición', () => {
     expect(anuncioPendienteRestaurado('Comprar pan', 'Por hacer', 2, 3)).toBe(
       '"Comprar pan" restaurado en Por hacer, posición 2 de 3',
+    )
+  })
+})
+
+describe('anuncioPendienteMovido', () => {
+  it('dice el título, la Etapa y la posición', () => {
+    expect(anuncioPendienteMovido('Comprar pan', 'En curso', 1, 4)).toBe(
+      '"Comprar pan" movido a En curso, posición 1 de 4',
     )
   })
 })

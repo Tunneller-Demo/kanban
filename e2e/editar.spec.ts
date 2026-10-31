@@ -9,7 +9,7 @@ const crear = async (page: Page, etapa: string, titulo: string) => {
 }
 
 const boton = (page: Page, nombre: string | RegExp) =>
-  page.getByRole('region', { name: 'Por hacer' }).getByRole('button', { name: nombre })
+  page.getByRole('region', { name: 'Por hacer' }).getByRole('button', { name: nombre, exact: true })
 
 const abrir = async (page: Page, titulo: string | RegExp = 'Comprar pan') => {
   await boton(page, titulo).click()
@@ -58,7 +58,7 @@ test('los cambios se guardan al momento y siguen al recargar', async ({ page }) 
 
   await page.reload()
 
-  const reabierto = await abrir(page, /Comprar leche/)
+  const reabierto = await abrir(page, /^Comprar leche/)
   await expect(reabierto.getByRole('textbox', { name: 'Nota' })).toHaveValue('Entera\nDos litros')
   await expect(reabierto.getByRole('radio', { name: 'Azul' })).toBeChecked()
 })
@@ -125,7 +125,7 @@ test('el título pegado de más no se corta y conserva el último válido', asyn
 
 test('la Etiqueta se ve en el Tablero, se cambia y se quita', async ({ page }) => {
   const dialogo = await abrir(page)
-  const pendiente = boton(page, /Comprar pan/)
+  const pendiente = boton(page, /^Comprar pan/)
 
   await dialogo.getByRole('radio', { name: 'Rojo' }).check({ force: true })
   await dialogo.getByRole('radio', { name: 'Verde' }).check({ force: true })
@@ -152,7 +152,7 @@ test('la nota muestra un icono y el lector de pantalla oye «Tiene nota»', asyn
   await dialogo.getByRole('textbox', { name: 'Nota' }).fill('Integral')
   await page.keyboard.press('Escape')
 
-  const pendiente = boton(page, /Comprar pan/)
+  const pendiente = boton(page, /^Comprar pan/)
   await expect(pendiente).toHaveAccessibleName('Comprar pan, Tiene nota')
   await expect(pendiente.locator('[data-icono-de-nota]')).toBeVisible()
 })
@@ -165,7 +165,7 @@ test('una nota vaciada quita el icono', async ({ page }) => {
   await nota.fill('   ')
   await page.keyboard.press('Escape')
 
-  await expect(boton(page, /Comprar pan/)).toHaveAccessibleName('Comprar pan')
+  await expect(boton(page, /^Comprar pan/)).toHaveAccessibleName('Comprar pan')
 })
 
 for (const [nombre, cerrar] of [

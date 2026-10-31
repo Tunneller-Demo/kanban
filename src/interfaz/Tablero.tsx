@@ -10,10 +10,23 @@ type Props = {
   onCrear: (etapaId: string, titulo: string) => boolean
   onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
   onBorrar: (pendienteId: string) => void
+  onSubir: (pendienteId: string) => void
+  onBajar: (pendienteId: string) => void
+  onMoverA: (pendienteId: string, etapaId: string) => void
   onAnunciar: (texto: string) => void
 }
 
-export function Tablero({ tablero, foco, onCrear, onEditar, onBorrar, onAnunciar }: Props) {
+export function Tablero({
+  tablero,
+  foco,
+  onCrear,
+  onEditar,
+  onBorrar,
+  onSubir,
+  onBajar,
+  onMoverA,
+  onAnunciar,
+}: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
 
   // El destino puede montarse en el mismo cambio que pide el foco: por eso va tras pintar.
@@ -32,9 +45,13 @@ export function Tablero({ tablero, foco, onCrear, onEditar, onBorrar, onAnunciar
         <Etapa
           key={etapa.id}
           etapa={etapa}
+          etapas={tablero.etapas}
           onCrear={(titulo) => onCrear(etapa.id, titulo)}
           onEditar={onEditar}
           onBorrar={onBorrar}
+          onSubir={onSubir}
+          onBajar={onBajar}
+          onMoverA={onMoverA}
           onAnunciar={onAnunciar}
         />
       ))}

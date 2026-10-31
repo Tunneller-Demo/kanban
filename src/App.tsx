@@ -12,6 +12,9 @@ export function App() {
     crear,
     editar,
     borrar,
+    subir,
+    bajar,
+    moverA,
     deshacer,
     cerrarAviso,
     anunciar,
@@ -33,6 +36,9 @@ export function App() {
           onCrear={crear}
           onEditar={editar}
           onBorrar={borrar}
+          onSubir={subir}
+          onBajar={bajar}
+          onMoverA={moverA}
           onAnunciar={anunciar}
         />
       </main>

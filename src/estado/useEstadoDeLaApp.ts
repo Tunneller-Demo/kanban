@@ -4,16 +4,20 @@ import { useState } from 'react'
 import {
   anuncioPendienteBorrado,
   anuncioPendienteCreado,
+  anuncioPendienteMovido,
   anuncioPendienteRestaurado,
   anuncioTituloDemasiadoLargo,
   avisoPendienteBorrado,
 } from '@/anuncios/anuncios'
 import {
+  bajarPendiente,
   borrarPendiente,
   crearPendiente,
   editarPendiente,
   LIMITE_TITULO,
   localizarPendiente,
+  moverPendienteAEtapa,
+  subirPendiente,
   tableroDePartida,
   type CambiosDePendiente,
   type Tablero,
@@ -101,6 +105,30 @@ export function useEstadoDeLaApp() {
     anunciar(anuncioPendienteBorrado(pendiente.titulo))
   }
 
+  function aplicarMovimiento(pendienteId: string, nuevo: Tablero) {
+    if (nuevo === tablero) return
+
+    aplicar(nuevo)
+
+    const { etapa, indice, pendiente } = localizarPendiente(nuevo, pendienteId)!
+    setFoco({ tipo: 'pendiente', id: pendienteId })
+    anunciar(
+      anuncioPendienteMovido(pendiente.titulo, etapa.nombre, indice + 1, etapa.pendientes.length),
+    )
+  }
+
+  function subir(pendienteId: string) {
+    aplicarMovimiento(pendienteId, subirPendiente(tablero, pendienteId))
+  }
+
+  function bajar(pendienteId: string) {
+    aplicarMovimiento(pendienteId, bajarPendiente(tablero, pendienteId))
+  }
+
+  function moverA(pendienteId: string, etapaId: string) {
+    aplicarMovimiento(pendienteId, moverPendienteAEtapa(tablero, pendienteId, etapaId))
+  }
+
   function deshacer() {
     if (!deshacerDisponible) return
 
@@ -125,6 +153,9 @@ export function useEstadoDeLaApp() {
     crear,
     editar,
     borrar,
+    subir,
+    bajar,
+    moverA,
     deshacer,
     cerrarAviso,
     anunciar,

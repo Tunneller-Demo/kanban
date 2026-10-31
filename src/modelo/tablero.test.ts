@@ -1,11 +1,15 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
+  bajarPendiente,
   borrarPendiente,
   crearPendiente,
   editarPendiente,
   esTablero,
   localizarPendiente,
+  moverPendiente,
+  moverPendienteAEtapa,
+  subirPendiente,
   tableroDePartida,
   type CambiosDePendiente,
   type Etiqueta,
@@ -251,6 +255,152 @@ describe('borrarPendiente', () => {
 
   it('el resultado sigue siendo un Tablero válido', () => {
     expect(esTablero(borrarPendiente(conVarios(), 'x'))).toBe(true)
+  })
+})
+
+describe('mover Pendientes', () => {
+  // Por hacer: a, b, c. En curso: d. Hecho: vacía.
+  const tableroConPendientes = (): Tablero => {
+    const tablero = tableroDePartida()
+    tablero.etapas[0].pendientes.push(
+      { id: 'a', titulo: 'Primero', nota: 'Integral', etiqueta: 'azul' },
+      { id: 'b', titulo: 'Segundo' },
+      { id: 'c', titulo: 'Tercero' },
+    )
+    tablero.etapas[1].pendientes.push({ id: 'd', titulo: 'Cuarto' })
+    return tablero
+  }
+
+  const ids = (tablero: Tablero) =>
+    tablero.etapas.map((etapa) => etapa.pendientes.map((pendiente) => pendiente.id))
+
+  describe('moverPendiente', () => {
+    it('reordena dentro de la Etapa: el índice es la posición final', () => {
+      const tablero = tableroConPendientes()
+
+      expect(ids(moverPendiente(tablero, 'a', 'por-hacer', 2))).toEqual([
+        ['b', 'c', 'a'],
+        ['d'],
+        [],
+      ])
+      expect(ids(moverPendiente(tablero, 'c', 'por-hacer', 0))).toEqual([
+        ['c', 'a', 'b'],
+        ['d'],
+        [],
+      ])
+    })
+
+    it('lleva a otra Etapa en cualquier posición, incluida la última', () => {
+      const tablero = tableroConPendientes()
+
+      expect(ids(moverPendiente(tablero, 'b', 'en-curso', 1))).toEqual([['a', 'c'], ['d', 'b'], []])
+      expect(ids(moverPendiente(tablero, 'b', 'hecho', 0))).toEqual([['a', 'c'], ['d'], ['b']])
+    })
+
+    it('conserva el Pendiente con su nota y su Etiqueta', () => {
+      const tablero = tableroConPendientes()
+      const original = tablero.etapas[0].pendientes[0]
+
+      const nuevo = moverPendiente(tablero, 'a', 'en-curso', 0)
+
+      expect(nuevo.etapas[1].pendientes[0]).toEqual(original)
+    })
+
+    it('el resultado sigue siendo un Tablero válido', () => {
+      expect(esTablero(moverPendiente(tableroConPendientes(), 'a', 'hecho', 0))).toBe(true)
+    })
+
+    it('no modifica el Tablero recibido', () => {
+      const tablero = tableroConPendientes()
+      const antes = structuredClone(tablero)
+
+      moverPendiente(tablero, 'a', 'en-curso', 0)
+
+      expect(tablero).toEqual(antes)
+    })
+
+    it.each([
+      ['el Pendiente no existe', 'x', 'en-curso', 0],
+      ['la Etapa no existe', 'a', 'x', 0],
+      ['el índice es negativo', 'a', 'en-curso', -1],
+      ['el índice se pasa en otra Etapa', 'a', 'en-curso', 2],
+      ['el índice se pasa en su Etapa', 'a', 'por-hacer', 3],
+      ['el índice no es entero', 'a', 'en-curso', 0.5],
+      ['ya está en ese sitio', 'b', 'por-hacer', 1],
+    ])('devuelve el mismo Tablero si %s', (_, pendienteId, etapaId, indice) => {
+      const tablero = tableroConPendientes()
+
+      expect(moverPendiente(tablero, pendienteId, etapaId, indice)).toBe(tablero)
+    })
+  })
+
+  describe('subirPendiente', () => {
+    it('sube una posición dentro de su Etapa', () => {
+      expect(ids(subirPendiente(tableroConPendientes(), 'c'))).toEqual([['a', 'c', 'b'], ['d'], []])
+    })
+
+    it('el primero de la Etapa no cambia de Etapa', () => {
+      const tablero = tableroConPendientes()
+
+      expect(subirPendiente(tablero, 'a')).toBe(tablero)
+      expect(subirPendiente(tablero, 'd')).toBe(tablero)
+    })
+
+    it('devuelve el mismo Tablero si el Pendiente no existe', () => {
+      const tablero = tableroConPendientes()
+
+      expect(subirPendiente(tablero, 'x')).toBe(tablero)
+    })
+  })
+
+  describe('bajarPendiente', () => {
+    it('baja una posición dentro de su Etapa', () => {
+      expect(ids(bajarPendiente(tableroConPendientes(), 'a'))).toEqual([['b', 'a', 'c'], ['d'], []])
+    })
+
+    it('el último de la Etapa no cambia de Etapa', () => {
+      const tablero = tableroConPendientes()
+
+      expect(bajarPendiente(tablero, 'c')).toBe(tablero)
+      expect(bajarPendiente(tablero, 'd')).toBe(tablero)
+    })
+
+    it('devuelve el mismo Tablero si el Pendiente no existe', () => {
+      const tablero = tableroConPendientes()
+
+      expect(bajarPendiente(tablero, 'x')).toBe(tablero)
+    })
+  })
+
+  describe('moverPendienteAEtapa', () => {
+    it('entra arriba de la Etapa de destino', () => {
+      expect(ids(moverPendienteAEtapa(tableroConPendientes(), 'c', 'en-curso'))).toEqual([
+        ['a', 'b'],
+        ['c', 'd'],
+        [],
+      ])
+    })
+
+    it('entra en una Etapa vacía', () => {
+      expect(ids(moverPendienteAEtapa(tableroConPendientes(), 'd', 'hecho'))).toEqual([
+        ['a', 'b', 'c'],
+        [],
+        ['d'],
+      ])
+    })
+
+    it('hacia su propia Etapa no hace nada: no hay «Al principio»', () => {
+      const tablero = tableroConPendientes()
+
+      expect(moverPendienteAEtapa(tablero, 'c', 'por-hacer')).toBe(tablero)
+    })
+
+    it('devuelve el mismo Tablero si el Pendiente o la Etapa no existen', () => {
+      const tablero = tableroConPendientes()
+
+      expect(moverPendienteAEtapa(tablero, 'x', 'en-curso')).toBe(tablero)
+      expect(moverPendienteAEtapa(tablero, 'a', 'x')).toBe(tablero)
+    })
   })
 })
 

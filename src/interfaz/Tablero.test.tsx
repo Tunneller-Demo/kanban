@@ -11,6 +11,9 @@ const pintar = (tablero: DatosTablero) =>
       onCrear={() => true}
       onEditar={() => {}}
       onBorrar={() => {}}
+      onSubir={() => {}}
+      onBajar={() => {}}
+      onMoverA={() => {}}
       onAnunciar={() => {}}
     />,
   )
@@ -49,5 +52,18 @@ describe('Tablero', () => {
       screen.getByRole('button', { name: 'Comprar pan, Etiqueta roja, Tiene nota' }),
     ).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Llamar al banco' })).toBeTruthy()
+  })
+
+  it('el botón «⋮» va junto al que abre el Pendiente, nunca dentro', () => {
+    const tablero = tableroDePartida()
+    tablero.etapas[0].pendientes.push({ id: 'a', titulo: 'Comprar pan' })
+    pintar(tablero)
+
+    const abrir = screen.getByRole('button', { name: 'Comprar pan' })
+    const menu = screen.getByRole('button', { name: 'Mover "Comprar pan"' })
+
+    expect(menu.parentElement).toBe(abrir.parentElement)
+    expect(abrir.contains(menu)).toBe(false)
+    expect(menu.getAttribute('aria-haspopup')).toBe('menu')
   })
 })

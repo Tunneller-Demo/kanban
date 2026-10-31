@@ -120,6 +120,78 @@ describe('borrar y Deshacer', () => {
   })
 })
 
+describe('mover', () => {
+  it('«Mover a» lleva el Pendiente arriba, lo guarda, lo anuncia y le deja el foco', () => {
+    const { result, crear, idDe } = preparar()
+    crear('Comprar pan')
+    act(() => void result.current.crear('en-curso', 'Regar'))
+    const id = idDe('Comprar pan')
+
+    act(() => result.current.moverA(id, 'en-curso'))
+
+    const enCurso = result.current.tablero.etapas[1].pendientes
+    expect(enCurso.map((pendiente) => pendiente.titulo)).toEqual(['Comprar pan', 'Regar'])
+    expect(guardado()).toEqual(result.current.tablero)
+    expect(result.current.anuncio).toBe('"Comprar pan" movido a En curso, posición 1 de 2')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id })
+  })
+
+  it('«Subir» y «Bajar» anuncian la posición nueva en su Etapa', () => {
+    const { result, crear, idDe, titulos } = preparar()
+    crear('Regar')
+    crear('Comprar pan')
+    const id = idDe('Regar')
+
+    act(() => result.current.subir(id))
+    expect(titulos()).toEqual(['Regar', 'Comprar pan'])
+    expect(result.current.anuncio).toBe('"Regar" movido a Por hacer, posición 1 de 2')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id })
+
+    act(() => result.current.bajar(id))
+    expect(titulos()).toEqual(['Comprar pan', 'Regar'])
+    expect(result.current.anuncio).toBe('"Regar" movido a Por hacer, posición 2 de 2')
+  })
+
+  it('mover retira el aviso de «Deshacer» y no ofrece otro', () => {
+    const { result, crear, idDe, borrar } = preparar()
+    crear('Regar')
+    crear('Comprar pan')
+    crear('Llamar al banco')
+    borrar('Comprar pan')
+
+    act(() => result.current.subir(idDe('Regar')))
+
+    expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+
+  it('un movimiento sin efecto no anuncia, no pide foco y conserva el aviso', () => {
+    const { result, crear, idDe, borrar } = preparar()
+    crear('Regar')
+    crear('Comprar pan')
+    borrar('Comprar pan')
+    const { anuncio, foco } = result.current
+    const id = idDe('Regar')
+
+    act(() => result.current.subir(id))
+    act(() => result.current.bajar(id))
+    act(() => result.current.moverA(id, 'por-hacer'))
+
+    expect(result.current.anuncio).toBe(anuncio)
+    expect(result.current.foco).toBe(foco)
+    expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
+  })
+
+  it('con datos dañados, mover no los sobrescribe', () => {
+    localStorage.setItem(claveDeAlmacenamiento(), 'datos dañados')
+    const { result, crear, idDe } = preparar()
+    crear('Comprar pan')
+
+    act(() => result.current.moverA(idDe('Comprar pan'), 'hecho'))
+
+    expect(localStorage.getItem(claveDeAlmacenamiento())).toBe('datos dañados')
+  })
+})
+
 describe('foco', () => {
   it('tras borrar va al siguiente; si no hay, al anterior; si no, al botón de crear', () => {
     const { result, crear, idDe, borrar } = preparar()

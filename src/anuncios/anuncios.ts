@@ -37,6 +37,15 @@ export function anuncioPendienteRestaurado(
   return `"${titulo}" restaurado en ${nombreDeEtapa}, posición ${posicion} de ${total}`
 }
 
+export function anuncioPendienteMovido(
+  titulo: string,
+  nombreDeEtapa: string,
+  posicion: number,
+  total: number,
+): string {
+  return `"${titulo}" movido a ${nombreDeEtapa}, posición ${posicion} de ${total}`
+}
+
 export function anuncioTituloDemasiadoLargo(exceso: number): string {
   return `Pendiente sin crear. ${textoDeExceso(exceso)}`
 }

@@ -105,6 +105,55 @@ export function borrarPendiente(tablero: Tablero, pendienteId: string): Tablero 
   }
 }
 
+// `indice` es la posición final en la Etapa de destino. La usan el menú y el arrastre.
+// Si algo no vale o el Pendiente ya está ahí, devuelve el mismo Tablero.
+export function moverPendiente(
+  tablero: Tablero,
+  pendienteId: string,
+  etapaId: string,
+  indice: number,
+): Tablero {
+  const origen = localizarPendiente(tablero, pendienteId)
+  const destino = tablero.etapas.find((etapa) => etapa.id === etapaId)
+  if (!origen || !destino) return tablero
+
+  const mismaEtapa = origen.etapa === destino
+  const ultimoIndice = destino.pendientes.length - (mismaEtapa ? 1 : 0)
+  const enSuSitio = mismaEtapa && indice === origen.indice
+  if (!Number.isInteger(indice) || indice < 0 || indice > ultimoIndice || enSuSitio) {
+    return tablero
+  }
+
+  return {
+    etapas: tablero.etapas.map((etapa) => {
+      const pendientes = etapa.pendientes.filter((pendiente) => pendiente.id !== pendienteId)
+      if (etapa === destino) pendientes.splice(indice, 0, origen.pendiente)
+      return { ...etapa, pendientes }
+    }),
+  }
+}
+
+// El primero de su Etapa se queda donde está.
+export function subirPendiente(tablero: Tablero, pendienteId: string): Tablero {
+  return desplazarPendiente(tablero, pendienteId, -1)
+}
+
+// El último de su Etapa se queda donde está.
+export function bajarPendiente(tablero: Tablero, pendienteId: string): Tablero {
+  return desplazarPendiente(tablero, pendienteId, 1)
+}
+
+// Entra arriba de la Etapa. Hacia su propia Etapa no hace nada: no hay «Al principio».
+export function moverPendienteAEtapa(
+  tablero: Tablero,
+  pendienteId: string,
+  etapaId: string,
+): Tablero {
+  if (localizarPendiente(tablero, pendienteId)?.etapa.id === etapaId) return tablero
+
+  return moverPendiente(tablero, pendienteId, etapaId, 0)
+}
+
 export function localizarPendiente(
   tablero: Tablero,
   pendienteId: string,
@@ -122,6 +171,13 @@ export function esTablero(valor: unknown): valor is Tablero {
 
   const pendientes = etapas.flatMap((etapa) => etapa.pendientes)
   return sinRepetidos(etapas) && sinRepetidos(pendientes)
+}
+
+function desplazarPendiente(tablero: Tablero, pendienteId: string, salto: number): Tablero {
+  const sitio = localizarPendiente(tablero, pendienteId)
+  if (!sitio) return tablero
+
+  return moverPendiente(tablero, pendienteId, sitio.etapa.id, sitio.indice + salto)
 }
 
 function aplicarCambios(pendiente: Pendiente, cambios: CambiosDePendiente): Pendiente {

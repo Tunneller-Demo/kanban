@@ -13,10 +13,10 @@ const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
 const pendientes = (page: Page) =>
   page.getByRole('region', { name: 'Por hacer' }).getByRole('listitem')
 
-const boton = (page: Page, nombre: string) =>
-  page.getByRole('region', { name: 'Por hacer' }).getByRole('button', { name: nombre })
+const boton = (page: Page, nombre: string | RegExp) =>
+  page.getByRole('region', { name: 'Por hacer' }).getByRole('button', { name: nombre, exact: true })
 
-const borrar = async (page: Page, titulo: string) => {
+const borrar = async (page: Page, titulo: string | RegExp) => {
   await boton(page, titulo).first().click()
   await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click()
 }
@@ -85,13 +85,13 @@ test('«Deshacer» restaura el Pendiente en su posición, con su nota y su Etiqu
   await dialogo.getByRole('radio', { name: 'Azul' }).check({ force: true })
   await page.keyboard.press('Escape')
 
-  await borrar(page, 'Segundo')
+  await borrar(page, /^Segundo/)
   await expect(pendientes(page)).toHaveText(['Primero', 'Tercero'])
 
   await deshacer(page).click()
 
   await expect(pendientes(page)).toHaveText(['Primero', 'Segundo', 'Tercero'])
-  const restaurado = boton(page, 'Segundo')
+  const restaurado = boton(page, /^Segundo/)
   await expect(restaurado).toHaveAccessibleName('Segundo, Etiqueta azul, Tiene nota')
   await expect(restaurado).toBeFocused()
   await expect(deshacer(page)).toHaveCount(0)

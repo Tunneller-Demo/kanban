@@ -15,6 +15,8 @@ export function App() {
     subir,
     bajar,
     moverA,
+    soltar,
+    dejar,
     deshacer,
     cerrarAviso,
     anunciar,
@@ -39,6 +41,8 @@ export function App() {
           onSubir={subir}
           onBajar={bajar}
           onMoverA={moverA}
+          onSoltar={soltar}
+          onDejar={dejar}
           onAnunciar={anunciar}
         />
       </main>

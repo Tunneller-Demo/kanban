@@ -9,6 +9,7 @@
   --muted: #181b24; /* Carriles de las Etapas */
   --muted-foreground: #9aa2b5;
   --card: #1f2330; /* Pendientes */
+  --card-levantado: #2a3042; /* Pendiente al arrastrarlo */
   --card-foreground: #e9ecf4;
   --popover: #1f2330;
   --popover-foreground: #e9ecf4;
@@ -87,4 +88,25 @@
   .bg-primary:focus-visible {
     outline-color: var(--ring-sobre-primary);
   }
+}
+
+/* Fuera de las capas: dnd-kit marca el Pendiente levantado y su hueco, y las utilidades no los alcanzan. */
+[data-dnd-dragging]:not([data-dnd-dropping]) {
+  box-shadow:
+    0 0 0 1px var(--primary),
+    0 8px 20px rgb(0 0 0 / 50%);
+}
+
+[data-dnd-dragging]:not([data-dnd-dropping]) > * {
+  background-color: var(--card-levantado);
+}
+
+[data-dnd-placeholder] {
+  visibility: visible !important;
+  outline: 1px dashed var(--input);
+  outline-offset: -1px;
+}
+
+[data-dnd-placeholder] > * {
+  visibility: hidden;
 }

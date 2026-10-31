@@ -14,6 +14,8 @@ const pintar = (tablero: DatosTablero) =>
       onSubir={() => {}}
       onBajar={() => {}}
       onMoverA={() => {}}
+      onSoltar={() => {}}
+      onDejar={() => {}}
       onAnunciar={() => {}}
     />,
   )

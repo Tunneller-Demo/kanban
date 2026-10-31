@@ -3,6 +3,9 @@ import type { Etiqueta, Pendiente } from '@/modelo/tablero'
 
 export const AVISO_SIN_GUARDAR = 'Sin guardar'
 
+export const AYUDA_DE_ARRASTRE =
+  'Intro abre el Pendiente. Espacio lo coge; luego, las flechas lo mueven, Intro o Espacio lo sueltan y Escape cancela'
+
 const NOMBRES_DE_ETIQUETA: Record<Etiqueta, { nombre: string; adjetivo: string }> = {
   rojo: { nombre: 'Rojo', adjetivo: 'roja' },
   naranja: { nombre: 'Naranja', adjetivo: 'naranja' },
@@ -44,6 +47,33 @@ export function anuncioPendienteMovido(
   total: number,
 ): string {
   return `"${titulo}" movido a ${nombreDeEtapa}, posición ${posicion} de ${total}`
+}
+
+export function anuncioPendienteCogido(
+  titulo: string,
+  nombreDeEtapa: string,
+  posicion: number,
+  total: number,
+): string {
+  return `"${titulo}" cogido en ${nombreDeEtapa}, posición ${posicion} de ${total}`
+}
+
+export function anuncioPendienteSobre(
+  titulo: string,
+  nombreDeEtapa: string,
+  posicion: number,
+  total: number,
+): string {
+  return `"${titulo}" sobre ${nombreDeEtapa}, posición ${posicion} de ${total}`
+}
+
+export function anuncioPendienteSinMover(
+  titulo: string,
+  nombreDeEtapa: string,
+  posicion: number,
+  total: number,
+): string {
+  return `"${titulo}" sigue en ${nombreDeEtapa}, posición ${posicion} de ${total}`
 }
 
 export function anuncioTituloDemasiadoLargo(exceso: number): string {

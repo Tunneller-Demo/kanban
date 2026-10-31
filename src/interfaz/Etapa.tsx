@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { useEtapaReceptora } from '@/arrastre/arrastre'
 import type { CambiosDePendiente, Etapa as DatosEtapa } from '@/modelo/tablero'
 import { CampoDePendiente } from './CampoDePendiente'
 import { claveDeFoco } from './foco'
@@ -7,6 +8,7 @@ import { Pendiente } from './Pendiente'
 type Props = {
   etapa: DatosEtapa
   etapas: DatosEtapa[]
+  idAyuda: string
   onCrear: (titulo: string) => boolean
   onEditar: (pendienteId: string, cambios: CambiosDePendiente) => void
   onBorrar: (pendienteId: string) => void
@@ -19,6 +21,7 @@ type Props = {
 export function Etapa({
   etapa,
   etapas,
+  idAyuda,
   onCrear,
   onEditar,
   onBorrar,
@@ -32,6 +35,7 @@ export function Etapa({
   const botonCrear = useRef<HTMLButtonElement>(null)
   const devolverFoco = useRef(false)
   const [creando, setCreando] = useState(false)
+  const { ref, esDestino } = useEtapaReceptora(etapa.id)
 
   // El botón no existe hasta que el campo se cierra.
   useEffect(() => {
@@ -47,8 +51,10 @@ export function Etapa({
 
   return (
     <section
+      ref={ref}
       aria-labelledby={idEncabezado}
-      className="flex min-w-0 flex-col rounded-[10px] bg-muted p-2.5 carriles:w-70 carriles:flex-none"
+      data-destino={esDestino || undefined}
+      className="flex min-w-0 flex-col rounded-[10px] bg-muted p-2.5 data-destino:ring data-destino:ring-primary data-destino:ring-inset carriles:min-h-0 carriles:w-70 carriles:flex-none"
     >
       <header className="flex items-center gap-2">
         <h2
@@ -77,13 +83,19 @@ export function Etapa({
         </button>
       )}
       {total > 0 && (
-        <ol aria-labelledby={idEncabezado} className="mt-2 flex flex-col gap-1.5">
+        // El relleno deja sitio al contorno de foco, que el desplazamiento recortaría.
+        <ol
+          aria-labelledby={idEncabezado}
+          className="-mx-1 mt-1 flex flex-col gap-1.5 p-1 carriles:min-h-0 carriles:flex-1 carriles:overflow-y-auto carriles:overscroll-contain"
+        >
           {etapa.pendientes.map((pendiente, indice) => (
             <Pendiente
               key={pendiente.id}
               pendiente={pendiente}
               etapas={etapas}
               etapaId={etapa.id}
+              indice={indice}
+              idAyuda={idAyuda}
               puedeSubir={indice > 0}
               puedeBajar={indice < total - 1}
               onEditar={(cambios) => onEditar(pendiente.id, cambios)}

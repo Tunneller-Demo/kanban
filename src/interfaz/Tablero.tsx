@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
+import { AYUDA_DE_ARRASTRE } from '@/anuncios/anuncios'
+import { ZonaDeArrastre } from '@/arrastre/arrastre'
 import type { Foco } from '@/estado/useEstadoDeLaApp'
 import type { CambiosDePendiente, Tablero as DatosTablero } from '@/modelo/tablero'
 import { Etapa } from './Etapa'
@@ -13,6 +15,8 @@ type Props = {
   onSubir: (pendienteId: string) => void
   onBajar: (pendienteId: string) => void
   onMoverA: (pendienteId: string, etapaId: string) => void
+  onSoltar: (pendienteId: string, etapaId: string, indice: number) => void
+  onDejar: (pendienteId: string) => void
   onAnunciar: (texto: string) => void
 }
 
@@ -25,36 +29,53 @@ export function Tablero({
   onSubir,
   onBajar,
   onMoverA,
+  onSoltar,
+  onDejar,
   onAnunciar,
 }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
+  const idAyuda = useId()
 
   // El destino puede montarse en el mismo cambio que pide el foco: por eso va tras pintar.
   useEffect(() => {
     if (!foco) return
-    const selector = `[data-foco="${CSS.escape(claveDeFoco(foco))}"]`
+    // El hueco del arrastre es una copia inerte que repite la marca.
+    const selector = `[data-foco="${CSS.escape(claveDeFoco(foco))}"]:not([inert] *)`
     contenedor.current?.querySelector<HTMLElement>(selector)?.focus()
   }, [foco])
 
   return (
-    <div
-      ref={contenedor}
-      className="flex flex-1 flex-col gap-2.5 px-4 pb-4 carriles:flex-row carriles:px-6"
+    <ZonaDeArrastre
+      tablero={tablero}
+      onSoltar={onSoltar}
+      onDejar={onDejar}
+      onAnunciar={onAnunciar}
     >
-      {tablero.etapas.map((etapa) => (
-        <Etapa
-          key={etapa.id}
-          etapa={etapa}
-          etapas={tablero.etapas}
-          onCrear={(titulo) => onCrear(etapa.id, titulo)}
-          onEditar={onEditar}
-          onBorrar={onBorrar}
-          onSubir={onSubir}
-          onBajar={onBajar}
-          onMoverA={onMoverA}
-          onAnunciar={onAnunciar}
-        />
-      ))}
-    </div>
+      {(visible) => (
+        <div
+          ref={contenedor}
+          className="flex flex-1 flex-col gap-2.5 px-4 pb-4 carriles:min-h-0 carriles:flex-row carriles:px-6"
+        >
+          <p id={idAyuda} hidden>
+            {AYUDA_DE_ARRASTRE}
+          </p>
+          {visible.etapas.map((etapa) => (
+            <Etapa
+              key={etapa.id}
+              etapa={etapa}
+              etapas={visible.etapas}
+              idAyuda={idAyuda}
+              onCrear={(titulo) => onCrear(etapa.id, titulo)}
+              onEditar={onEditar}
+              onBorrar={onBorrar}
+              onSubir={onSubir}
+              onBajar={onBajar}
+              onMoverA={onMoverA}
+              onAnunciar={onAnunciar}
+            />
+          ))}
+        </div>
+      )}
+    </ZonaDeArrastre>
   )
 }

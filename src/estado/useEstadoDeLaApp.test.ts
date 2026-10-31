@@ -181,6 +181,52 @@ describe('mover', () => {
     expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
   })
 
+  it('soltar deja el Pendiente en la Etapa y el índice pedidos, lo guarda y lo anuncia', () => {
+    const { result, crear, idDe } = preparar()
+    crear('Comprar pan')
+    act(() => void result.current.crear('en-curso', 'Pagar'))
+    act(() => void result.current.crear('en-curso', 'Regar'))
+    const id = idDe('Comprar pan')
+
+    act(() => result.current.soltar(id, 'en-curso', 1))
+
+    const enCurso = result.current.tablero.etapas[1].pendientes
+    expect(enCurso.map((pendiente) => pendiente.titulo)).toEqual(['Regar', 'Comprar pan', 'Pagar'])
+    expect(guardado()).toEqual(result.current.tablero)
+    expect(result.current.anuncio).toBe('"Comprar pan" movido a En curso, posición 2 de 3')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id })
+  })
+
+  it('soltar en el mismo sitio no cambia nada, pero devuelve el foco y lo dice', () => {
+    const { result, crear, idDe, borrar } = preparar()
+    crear('Regar')
+    crear('Comprar pan')
+    borrar('Comprar pan')
+    const antes = result.current.tablero
+    const id = idDe('Regar')
+
+    act(() => result.current.soltar(id, 'por-hacer', 0))
+
+    expect(result.current.tablero).toBe(antes)
+    expect(result.current.anuncio).toBe('"Regar" sigue en Por hacer, posición 1 de 1')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id })
+    expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
+  })
+
+  it('dejar un Pendiente sin mover devuelve el foco y lo dice', () => {
+    const { result, crear, idDe } = preparar()
+    crear('Regar')
+    crear('Comprar pan')
+    const antes = result.current.tablero
+    const id = idDe('Regar')
+
+    act(() => result.current.dejar(id))
+
+    expect(result.current.tablero).toBe(antes)
+    expect(result.current.anuncio).toBe('"Regar" sigue en Por hacer, posición 2 de 2')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id })
+  })
+
   it('con datos dañados, mover no los sobrescribe', () => {
     localStorage.setItem(claveDeAlmacenamiento(), 'datos dañados')
     const { result, crear, idDe } = preparar()

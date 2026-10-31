@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest'
 import {
   anuncioCambiosSinGuardar,
   anuncioPendienteBorrado,
+  anuncioPendienteCogido,
   anuncioPendienteCreado,
   anuncioPendienteMovido,
   anuncioPendienteRestaurado,
+  anuncioPendienteSinMover,
+  anuncioPendienteSobre,
   anuncioTituloDemasiadoLargo,
   anuncioTituloRecuperado,
   avisoPendienteBorrado,
@@ -48,6 +51,20 @@ describe('anuncioPendienteMovido', () => {
   it('dice el título, la Etapa y la posición', () => {
     expect(anuncioPendienteMovido('Comprar pan', 'En curso', 1, 4)).toBe(
       '"Comprar pan" movido a En curso, posición 1 de 4',
+    )
+  })
+})
+
+describe('anuncios del arrastre', () => {
+  it('dicen el título, la Etapa y la posición en cada momento', () => {
+    expect(anuncioPendienteCogido('Comprar pan', 'Por hacer', 1, 2)).toBe(
+      '"Comprar pan" cogido en Por hacer, posición 1 de 2',
+    )
+    expect(anuncioPendienteSobre('Comprar pan', 'En curso', 2, 3)).toBe(
+      '"Comprar pan" sobre En curso, posición 2 de 3',
+    )
+    expect(anuncioPendienteSinMover('Comprar pan', 'Por hacer', 1, 2)).toBe(
+      '"Comprar pan" sigue en Por hacer, posición 1 de 2',
     )
   })
 })

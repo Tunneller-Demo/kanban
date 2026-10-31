@@ -6,6 +6,7 @@ import {
   anuncioPendienteCreado,
   anuncioPendienteMovido,
   anuncioPendienteRestaurado,
+  anuncioPendienteSinMover,
   anuncioTituloDemasiadoLargo,
   avisoPendienteBorrado,
 } from '@/anuncios/anuncios'
@@ -16,6 +17,7 @@ import {
   editarPendiente,
   LIMITE_TITULO,
   localizarPendiente,
+  moverPendiente,
   moverPendienteAEtapa,
   subirPendiente,
   tableroDePartida,
@@ -129,6 +131,24 @@ export function useEstadoDeLaApp() {
     aplicarMovimiento(pendienteId, moverPendienteAEtapa(tablero, pendienteId, etapaId))
   }
 
+  function soltar(pendienteId: string, etapaId: string, indice: number) {
+    const nuevo = moverPendiente(tablero, pendienteId, etapaId, indice)
+    if (nuevo === tablero) dejar(pendienteId)
+    else aplicarMovimiento(pendienteId, nuevo)
+  }
+
+  // Arrastre sin cambios: quien lo seguía necesita saber dónde quedó el Pendiente.
+  function dejar(pendienteId: string) {
+    const sitio = localizarPendiente(tablero, pendienteId)
+    if (!sitio) return
+
+    const { etapa, indice, pendiente } = sitio
+    setFoco({ tipo: 'pendiente', id: pendienteId })
+    anunciar(
+      anuncioPendienteSinMover(pendiente.titulo, etapa.nombre, indice + 1, etapa.pendientes.length),
+    )
+  }
+
   function deshacer() {
     if (!deshacerDisponible) return
 
@@ -156,6 +176,8 @@ export function useEstadoDeLaApp() {
     subir,
     bajar,
     moverA,
+    soltar,
+    dejar,
     deshacer,
     cerrarAviso,
     anunciar,

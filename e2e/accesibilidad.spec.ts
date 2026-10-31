@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 const infracciones = async (page: Page) => {
   const { violations } = await new AxeBuilder({ page })
@@ -9,14 +10,14 @@ const infracciones = async (page: Page) => {
 }
 
 test('el Tablero no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await expect(page.getByRole('region', { name: 'Hecho' })).toBeVisible()
 
   expect(await infracciones(page)).toEqual([])
 })
 
 test('el diálogo del Pendiente no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' }).click()
   const campo = page.getByRole('textbox', { name: 'Título del nuevo Pendiente en Por hacer' })
   await campo.fill('Comprar pan')
@@ -37,7 +38,7 @@ test('el diálogo del Pendiente no tiene infracciones de WCAG A y AA', async ({ 
 })
 
 test('el aviso de «Deshacer» no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' }).click()
   const campo = page.getByRole('textbox', { name: 'Título del nuevo Pendiente en Por hacer' })
   await campo.fill('Comprar pan')
@@ -51,7 +52,7 @@ test('el aviso de «Deshacer» no tiene infracciones de WCAG A y AA', async ({ p
 })
 
 test('el menú «⋮» abierto no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' }).click()
   const campo = page.getByRole('textbox', { name: 'Título del nuevo Pendiente en Por hacer' })
   await campo.fill('Comprar pan')
@@ -66,7 +67,7 @@ test('el menú «⋮» abierto no tiene infracciones de WCAG A y AA', async ({ p
 test('la confirmación de borrar una Etapa no tiene infracciones de WCAG A y AA', async ({
   page,
 }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Añadir Pendiente a Hecho' }).click()
   const campo = page.getByRole('textbox', { name: 'Título del nuevo Pendiente en Hecho' })
   await campo.fill('Comprar pan')
@@ -82,7 +83,7 @@ test('la confirmación de borrar una Etapa no tiene infracciones de WCAG A y AA'
 test('el menú de la Etapa no tiene infracciones de WCAG A y AA, ni con su motivo', async ({
   page,
 }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Menú de la Etapa Hecho' }).click()
   await expect(page.getByRole('menu')).toBeVisible()
 
@@ -98,7 +99,7 @@ test('el menú de la Etapa no tiene infracciones de WCAG A y AA, ni con su motiv
 })
 
 test('el nombre de una Etapa con exceso no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Hecho', exact: true }).click()
   await page.getByRole('textbox', { name: 'Nombre de la Etapa Hecho' }).fill('a'.repeat(33))
   await expect(page.getByRole('region', { name: 'Hecho' })).toContainText('33/30')
@@ -107,7 +108,7 @@ test('el nombre de una Etapa con exceso no tiene infracciones de WCAG A y AA', a
 })
 
 test('«Añadir Etapa» con 8 Etapas no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   const boton = page.getByRole('button', { name: 'Añadir Etapa' })
   for (const nombre of ['Cuarta', 'Quinta', 'Sexta', 'Séptima', 'Octava']) {
     await boton.click()
@@ -121,7 +122,7 @@ test('«Añadir Etapa» con 8 Etapas no tiene infracciones de WCAG A y AA', asyn
 })
 
 test('crear un Pendiente no tiene infracciones de WCAG A y AA', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await page.getByRole('button', { name: 'Añadir Pendiente a Por hacer' }).click()
   const campo = page.getByRole('textbox', { name: 'Título del nuevo Pendiente en Por hacer' })
   await campo.fill('Comprar pan')

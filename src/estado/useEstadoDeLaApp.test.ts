@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { tableroDeEjemplo, tableroDePartida } from '@/modelo/tablero'
 import { claveDeAlmacenamiento } from '@/persistencia/clave'
+import { guardarTablero } from '@/persistencia/persistencia'
 import { useEstadoDeLaApp } from './useEstadoDeLaApp'
 
 const preparar = () => {
@@ -15,8 +17,225 @@ const preparar = () => {
 }
 
 const guardado = () => JSON.parse(localStorage.getItem(claveDeAlmacenamiento())!).tablero
+const marcaGuardada = () => JSON.parse(localStorage.getItem(claveDeAlmacenamiento())!).ejemploIntacto
 
-beforeEach(() => localStorage.clear())
+// Sin nada guardado sería la primera visita, que abre el Tablero de ejemplo.
+beforeEach(() => {
+  localStorage.clear()
+  guardarTablero(tableroDePartida(), false)
+})
+
+describe('Tablero de ejemplo', () => {
+  const primeraVisita = () => {
+    localStorage.clear()
+    return preparar()
+  }
+
+  it('la primera visita lo abre intacto', () => {
+    const { result } = primeraVisita()
+
+    expect(result.current.tablero).toEqual(tableroDeEjemplo())
+    expect(result.current.ejemploIntacto).toBe(true)
+  })
+
+  it('con algo guardado no se abre solo, aunque ese Tablero esté vacío', () => {
+    const { result } = preparar()
+
+    expect(result.current.tablero).toEqual(tableroDePartida())
+    expect(result.current.ejemploIntacto).toBe(false)
+  })
+
+  it('con datos dañados no se abre y no cuenta como intacto', () => {
+    localStorage.setItem(claveDeAlmacenamiento(), 'datos dañados')
+    const { result } = preparar()
+
+    expect(result.current.tablero).toEqual(tableroDePartida())
+    expect(result.current.ejemploIntacto).toBe(false)
+  })
+
+  it.each<[string, (estado: ReturnType<typeof useEstadoDeLaApp>) => void]>([
+    ['crear un Pendiente', (estado) => void estado.crear('hecho', 'Comprar pan')],
+    ['editar un Pendiente', (estado) => estado.editar('ejemplo-abrir', { titulo: 'Otro' })],
+    ['borrar un Pendiente', (estado) => estado.borrar('ejemplo-abrir')],
+    ['mover un Pendiente', (estado) => estado.moverA('ejemplo-abrir', 'en-curso')],
+    ['soltar un Pendiente', (estado) => estado.soltar('ejemplo-abrir', 'en-curso', 1)],
+    ['renombrar una Etapa', (estado) => estado.renombrar('hecho', 'Terminado')],
+    ['añadir una Etapa', (estado) => void estado.anadirEtapa('Revisión')],
+    ['mover una Etapa', (estado) => estado.moverEtapaIzquierda('hecho')],
+    ['borrar una Etapa', (estado) => estado.quitarEtapa('hecho')],
+  ])('deja de estar intacto al %s, y lo recuerda al recargar', (_, cambiar) => {
+    const { result } = primeraVisita()
+
+    act(() => cambiar(result.current))
+
+    expect(result.current.ejemploIntacto).toBe(false)
+    expect(marcaGuardada()).toBe(false)
+    expect(preparar().result.current.ejemploIntacto).toBe(false)
+  })
+
+  it('un intento que no cambia nada lo deja intacto', () => {
+    const { result } = primeraVisita()
+
+    act(() => result.current.moverA('ejemplo-abrir', 'hecho'))
+    act(() => result.current.dejar('ejemplo-abrir'))
+
+    expect(result.current.ejemploIntacto).toBe(true)
+  })
+
+  it('deshacer un cambio no lo devuelve a intacto', () => {
+    const { result } = primeraVisita()
+
+    act(() => result.current.borrar('ejemplo-abrir'))
+    act(() => result.current.deshacer())
+
+    expect(result.current.tablero).toEqual(tableroDeEjemplo())
+    expect(result.current.ejemploIntacto).toBe(false)
+  })
+})
+
+describe('Vaciar', () => {
+  const primeraVisita = () => {
+    localStorage.clear()
+    return preparar()
+  }
+
+  it('quita los Pendientes, conserva las Etapas, lo guarda y no ofrece «Deshacer»', () => {
+    const { result } = primeraVisita()
+    act(() => result.current.renombrar('hecho', 'Terminado'))
+
+    act(() => result.current.vaciar())
+
+    const { etapas } = result.current.tablero
+    expect(etapas.map((etapa) => etapa.nombre)).toEqual(['Por hacer', 'En curso', 'Terminado'])
+    expect(etapas.flatMap((etapa) => etapa.pendientes)).toEqual([])
+    expect(guardado()).toEqual(result.current.tablero)
+    expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+
+  it('anuncia cuántos quitó y lleva el foco al botón de crear de la primera Etapa', () => {
+    const { result } = primeraVisita()
+
+    act(() => result.current.vaciar())
+
+    expect(result.current.anuncio).toBe('Tablero vaciado. 6 Pendientes quitados')
+    expect(result.current.foco).toEqual({ tipo: 'crear', id: 'por-hacer' })
+  })
+
+  it('retira el «Deshacer» que hubiera', () => {
+    const { result } = primeraVisita()
+    act(() => result.current.borrar('ejemplo-abrir'))
+
+    act(() => result.current.vaciar())
+
+    expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+
+  it('deja de estar intacto y sigue vacío al recargar', () => {
+    const { result } = primeraVisita()
+
+    act(() => result.current.vaciar())
+
+    expect(result.current.ejemploIntacto).toBe(false)
+    const recargado = preparar().result.current
+    expect(recargado.tablero).toEqual(result.current.tablero)
+    expect(recargado.ejemploIntacto).toBe(false)
+  })
+
+  it('con el Tablero ya vacío no anuncia, no pide foco y conserva el aviso', () => {
+    const { result, crear, borrar } = preparar()
+    crear('Comprar pan')
+    borrar('Comprar pan')
+    const { anuncio, foco } = result.current
+
+    act(() => result.current.vaciar())
+
+    expect(result.current.anuncio).toBe(anuncio)
+    expect(result.current.foco).toBe(foco)
+    expect(result.current.avisoDeDeshacer).toBe('"Comprar pan" borrado')
+  })
+
+  it('con datos dañados no los sobrescribe', () => {
+    localStorage.setItem(claveDeAlmacenamiento(), 'datos dañados')
+    const { result, crear } = preparar()
+    crear('Comprar pan')
+
+    act(() => result.current.vaciar())
+
+    expect(localStorage.getItem(claveDeAlmacenamiento())).toBe('datos dañados')
+  })
+})
+
+describe('Ver el Tablero de ejemplo', () => {
+  const adaptado = () => {
+    const estado = preparar()
+    act(() => estado.result.current.renombrar('hecho', 'Terminado'))
+    act(() => void estado.result.current.anadirEtapa('Revisión'))
+    return estado
+  }
+
+  it('sustituye al Tablero por completo, incluidas las tres Etapas de partida', () => {
+    const { result } = adaptado()
+
+    act(() => result.current.verEjemplo())
+
+    expect(result.current.tablero).toEqual(tableroDeEjemplo())
+    expect(guardado()).toEqual(tableroDeEjemplo())
+  })
+
+  it('anuncia el resultado, ofrece «Deshacer» y deja el foco en su primer Pendiente', () => {
+    const { result } = adaptado()
+
+    act(() => result.current.verEjemplo())
+
+    expect(result.current.avisoDeDeshacer).toBe('Tablero de ejemplo abierto')
+    expect(result.current.anuncio).toBe('Tablero de ejemplo abierto. Deshacer disponible')
+    expect(result.current.foco).toEqual({ tipo: 'pendiente', id: 'ejemplo-arrastrame' })
+  })
+
+  it('«Deshacer» recupera el Tablero vacío con sus Etapas y lo anuncia', () => {
+    const { result } = adaptado()
+    const antes = result.current.tablero
+
+    act(() => result.current.verEjemplo())
+    act(() => result.current.deshacer())
+
+    expect(result.current.tablero).toEqual(antes)
+    expect(guardado()).toEqual(antes)
+    expect(result.current.anuncio).toBe('Tablero vacío recuperado')
+    expect(result.current.foco).toEqual({ tipo: 'crear', id: 'por-hacer' })
+  })
+
+  it('al cerrar el aviso se queda el ejemplo y vuelve el foco a su primer Pendiente', () => {
+    const { result } = adaptado()
+
+    act(() => result.current.verEjemplo())
+    const trasAbrir = result.current.foco
+    act(() => result.current.cerrarAviso())
+
+    expect(result.current.tablero).toEqual(tableroDeEjemplo())
+    expect(result.current.foco).toEqual(trasAbrir)
+  })
+
+  it('el ejemplo así abierto cuenta como intacto, también al recargar', () => {
+    const { result } = adaptado()
+
+    act(() => result.current.verEjemplo())
+
+    expect(result.current.ejemploIntacto).toBe(true)
+    expect(preparar().result.current.ejemploIntacto).toBe(true)
+  })
+
+  it('con Pendientes en el Tablero no hace nada', () => {
+    const { result, crear } = preparar()
+    crear('Comprar pan')
+    const antes = result.current.tablero
+
+    act(() => result.current.verEjemplo())
+
+    expect(result.current.tablero).toBe(antes)
+    expect(result.current.avisoDeDeshacer).toBeNull()
+  })
+})
 
 describe('borrar y Deshacer', () => {
   it('«Deshacer» devuelve el Pendiente a su posición, con su nota y su Etiqueta', () => {

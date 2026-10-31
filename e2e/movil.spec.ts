@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -43,7 +44,7 @@ const sinDesbordeDePagina = async (page: Page) =>
 
 test('en escritorio no hay pestañas ni encaje', async ({ page }, info) => {
   test.skip(info.project.name.endsWith('movil'), 'Solo aplica a partir de 720 px')
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
 
   await expect(tira(page)).toBeHidden()
   await expect(carrusel(page)).toHaveCSS('scroll-snap-type', 'none')
@@ -52,7 +53,7 @@ test('en escritorio no hay pestañas ni encaje', async ({ page }, info) => {
 test.describe('en estrecho', () => {
   test.beforeEach(async ({ page }, info) => {
     test.skip(!info.project.name.endsWith('movil'), 'El carrusel solo existe en estrecho')
-    await page.goto('/kanban/')
+    await abrirTableroVacio(page)
   })
 
   test.describe('carrusel', () => {

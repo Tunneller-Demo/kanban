@@ -15,9 +15,21 @@ describe('cargarTablero', () => {
 
   it('devuelve el Tablero guardado', () => {
     const tablero = crearPendiente(tableroDePartida(), 'hecho', 'Comprar pan', 'a')
-    guardarTablero(tablero)
+    guardarTablero(tablero, false)
 
-    expect(cargarTablero()).toEqual({ tipo: 'guardado', tablero })
+    expect(cargarTablero()).toEqual({ tipo: 'guardado', tablero, ejemploIntacto: false })
+  })
+
+  it('conserva que el Tablero de ejemplo sigue intacto', () => {
+    guardarTablero(tableroDePartida(), true)
+
+    expect(cargarTablero()).toMatchObject({ tipo: 'guardado', ejemploIntacto: true })
+  })
+
+  it('un guardado sin esa marca cuenta como no intacto', () => {
+    localStorage.setItem(clave, JSON.stringify({ version: 1, tablero: tableroDePartida() }))
+
+    expect(cargarTablero()).toMatchObject({ tipo: 'guardado', ejemploIntacto: false })
   })
 
   it.each([
@@ -43,7 +55,7 @@ describe('cargarTablero', () => {
 
 describe('guardarTablero', () => {
   it('informa del éxito', () => {
-    expect(guardarTablero(tableroDePartida())).toBe('guardado')
+    expect(guardarTablero(tableroDePartida(), false)).toBe('guardado')
   })
 
   it('informa del fallo', () => {
@@ -51,17 +63,21 @@ describe('guardarTablero', () => {
       throw new DOMException('Sin espacio', 'QuotaExceededError')
     })
 
-    expect(guardarTablero(tableroDePartida())).toBe('fallo')
+    expect(guardarTablero(tableroDePartida(), false)).toBe('fallo')
   })
 
   it('funciona de nuevo cuando el almacenamiento se recupera', () => {
     const espia = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
       throw new DOMException('Sin espacio', 'QuotaExceededError')
     })
-    guardarTablero(tableroDePartida())
+    guardarTablero(tableroDePartida(), false)
     espia.mockRestore()
 
-    expect(guardarTablero(tableroDePartida())).toBe('guardado')
-    expect(cargarTablero()).toEqual({ tipo: 'guardado', tablero: tableroDePartida() })
+    expect(guardarTablero(tableroDePartida(), false)).toBe('guardado')
+    expect(cargarTablero()).toEqual({
+      tipo: 'guardado',
+      tablero: tableroDePartida(),
+      ejemploIntacto: false,
+    })
   })
 })

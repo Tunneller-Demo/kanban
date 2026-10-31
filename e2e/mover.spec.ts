@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -33,7 +34,7 @@ const mover = async (page: Page, titulo: string, nombre: string) => {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
 })
 
 test('cada Pendiente tiene un «⋮» siempre visible con su área mínima', async ({ page }, info) => {

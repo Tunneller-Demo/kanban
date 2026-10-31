@@ -2,6 +2,8 @@
 // y mantiene el único «Deshacer» disponible.
 import { useState } from 'react'
 import {
+  ANUNCIO_EJEMPLO_ABIERTO,
+  ANUNCIO_TABLERO_VACIO_RECUPERADO,
   anuncioEtapaBorrada,
   anuncioEtapaCreada,
   anuncioEtapaMovida,
@@ -16,7 +18,9 @@ import {
   anuncioPendienteMovido,
   anuncioPendienteRestaurado,
   anuncioPendienteSinMover,
+  anuncioTableroVaciado,
   anuncioTituloDemasiadoLargo,
+  AVISO_EJEMPLO_ABIERTO,
   avisoEtapaBorrada,
   avisoPendienteBorrado,
 } from '@/anuncios/anuncios'
@@ -24,6 +28,7 @@ import {
   bajarPendiente,
   borrarEtapa,
   borrarPendiente,
+  contarPendientes,
   crearEtapa,
   crearPendiente,
   editarPendiente,
@@ -35,11 +40,13 @@ import {
   moverPendienteAEtapa,
   renombrarEtapa,
   subirPendiente,
+  tableroDeEjemplo,
   tableroDePartida,
+  vaciarTablero,
   type CambiosDePendiente,
   type Tablero,
 } from '@/modelo/tablero'
-import { cargarTablero, guardarTablero } from '@/persistencia/persistencia'
+import { cargarTablero, guardarTablero, type Carga } from '@/persistencia/persistencia'
 
 // Cada petición es un objeto nuevo: repetir el mismo destino vuelve a llevar el foco allí.
 export type Foco = { tipo: 'pendiente' | 'crear' | 'etapa' | 'asa'; id: string }
@@ -55,18 +62,19 @@ type Deshacer = {
 
 export function useEstadoDeLaApp() {
   const [carga] = useState(cargarTablero)
-  const [tablero, setTablero] = useState(() =>
-    carga.tipo === 'guardado' ? carga.tablero : tableroDePartida(),
-  )
+  const [tablero, setTablero] = useState(() => tableroInicial(carga))
+  const [ejemploIntacto, setEjemploIntacto] = useState(() => ejemploIntactoInicial(carga))
   const [anuncio, setAnuncio] = useState({ texto: '', orden: 0 })
   const [foco, setFoco] = useState<Foco | null>(null)
   const [deshacerDisponible, setDeshacerDisponible] = useState<Deshacer | null>(null)
 
-  function aplicar(nuevo: Tablero) {
+  // Solo «Ver el Tablero de ejemplo» deja el ejemplo intacto: todo lo demás es un cambio.
+  function aplicar(nuevo: Tablero, intacto = false) {
     setTablero(nuevo)
+    setEjemploIntacto(intacto)
     setDeshacerDisponible(null)
     // Los datos dañados no se sobrescriben: el rescate llega antes que cualquier escritura.
-    if (carga.tipo !== 'danado') guardarTablero(nuevo)
+    if (carga.tipo !== 'danado') guardarTablero(nuevo, intacto)
   }
 
   // El orden distingue dos anuncios con el mismo texto: si no, el segundo no se oiría.
@@ -258,6 +266,34 @@ export function useEstadoDeLaApp() {
     anunciar(anuncioEtapaBorrada(nombre, pendientes.length))
   }
 
+  function vaciar() {
+    const nuevo = vaciarTablero(tablero)
+    if (nuevo === tablero) return
+
+    aplicar(nuevo)
+    setFoco({ tipo: 'crear', id: nuevo.etapas[0].id })
+    anunciar(anuncioTableroVaciado(contarPendientes(tablero)))
+  }
+
+  // Solo se ofrece con el Tablero vacío: así «Deshacer» nunca recupera Pendientes.
+  function verEjemplo() {
+    if (contarPendientes(tablero) > 0) return
+
+    const ejemplo = tableroDeEjemplo()
+    const focoAlCerrar: Foco = { tipo: 'pendiente', id: ejemplo.etapas[0].pendientes[0].id }
+
+    aplicar(ejemplo, true)
+    setDeshacerDisponible({
+      tablero,
+      aviso: AVISO_EJEMPLO_ABIERTO,
+      anuncioAlDeshacer: ANUNCIO_TABLERO_VACIO_RECUPERADO,
+      focoAlDeshacer: { tipo: 'crear', id: tablero.etapas[0].id },
+      focoAlCerrar,
+    })
+    setFoco(focoAlCerrar)
+    anunciar(ANUNCIO_EJEMPLO_ABIERTO)
+  }
+
   function deshacer() {
     if (!deshacerDisponible) return
 
@@ -275,6 +311,7 @@ export function useEstadoDeLaApp() {
 
   return {
     tablero,
+    ejemploIntacto,
     anuncio: anuncio.texto,
     ordenDeAnuncio: anuncio.orden,
     foco,
@@ -294,8 +331,20 @@ export function useEstadoDeLaApp() {
     soltarEtapa,
     dejarEtapa,
     quitarEtapa,
+    vaciar,
+    verEjemplo,
     deshacer,
     cerrarAviso,
     anunciar,
   }
+}
+
+function tableroInicial(carga: Carga): Tablero {
+  if (carga.tipo === 'guardado') return carga.tablero
+  return carga.tipo === 'primera-visita' ? tableroDeEjemplo() : tableroDePartida()
+}
+
+// La primera visita no escribe nada: el ejemplo se guarda con el primer cambio.
+function ejemploIntactoInicial(carga: Carga): boolean {
+  return carga.tipo === 'guardado' ? carga.ejemploIntacto : carga.tipo === 'primera-visita'
 }

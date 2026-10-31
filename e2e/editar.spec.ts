@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 const crear = async (page: Page, etapa: string, titulo: string) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -23,7 +24,7 @@ const guardado = (page: Page) =>
   })
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
   await crear(page, 'Por hacer', 'Comprar pan')
 })
 

@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 test('muestra las tres Etapas de partida vacías', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
 
   await expect(page.getByRole('heading', { level: 1, name: 'Tablero de pendientes' })).toBeVisible()
   for (const nombre of ['Por hacer', 'En curso', 'Hecho']) {
@@ -51,7 +52,7 @@ test('usa las fuentes empaquetadas', async ({ page }) => {
 })
 
 test('se ve con Panel nocturno', async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
 
   const etapa = page.getByRole('region', { name: 'Por hacer' })
   const nombre = etapa.getByRole('heading')

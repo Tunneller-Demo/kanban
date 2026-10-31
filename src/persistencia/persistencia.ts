@@ -6,7 +6,7 @@ const VERSION = 1
 
 export type Carga =
   | { tipo: 'primera-visita' }
-  | { tipo: 'guardado'; tablero: Tablero }
+  | { tipo: 'guardado'; tablero: Tablero; ejemploIntacto: boolean }
   | { tipo: 'danado'; contenido: string }
 
 export type ResultadoDeGuardar = 'guardado' | 'fallo'
@@ -17,15 +17,15 @@ export function cargarTablero(): Carga {
 
   const datos = analizar(contenido)
   return datos?.version === VERSION && esTablero(datos.tablero)
-    ? { tipo: 'guardado', tablero: datos.tablero }
+    ? { tipo: 'guardado', tablero: datos.tablero, ejemploIntacto: datos.ejemploIntacto === true }
     : { tipo: 'danado', contenido }
 }
 
-export function guardarTablero(tablero: Tablero): ResultadoDeGuardar {
+export function guardarTablero(tablero: Tablero, ejemploIntacto: boolean): ResultadoDeGuardar {
   try {
     localStorage.setItem(
       claveDeAlmacenamiento(),
-      JSON.stringify({ version: VERSION, tablero }),
+      JSON.stringify({ version: VERSION, tablero, ejemploIntacto }),
     )
     return 'guardado'
   } catch {
@@ -42,7 +42,9 @@ function leer(): string | null {
   }
 }
 
-function analizar(contenido: string): { version?: unknown; tablero?: unknown } | null {
+function analizar(
+  contenido: string,
+): { version?: unknown; tablero?: unknown; ejemploIntacto?: unknown } | null {
   try {
     return JSON.parse(contenido)
   } catch {

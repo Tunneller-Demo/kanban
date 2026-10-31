@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 const crear = async (page: Page, etapa: string, ...titulos: string[]) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -25,7 +26,7 @@ const pie = (page: Page) => page.getByRole('contentinfo')
 const deshacer = (page: Page) => pie(page).getByRole('button', { name: 'Deshacer' })
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
 })
 
 test('«Borrar» actúa al momento y sin confirmación', async ({ page }) => {

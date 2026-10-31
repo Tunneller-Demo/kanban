@@ -4,6 +4,7 @@ import {
   bajarPendiente,
   borrarEtapa,
   borrarPendiente,
+  contarPendientes,
   crearEtapa,
   crearPendiente,
   editarPendiente,
@@ -14,12 +15,102 @@ import {
   moverPendienteAEtapa,
   renombrarEtapa,
   subirPendiente,
+  tableroDeEjemplo,
   tableroDePartida,
+  vaciarTablero,
   type CambiosDePendiente,
   type Etiqueta,
   type Pendiente,
   type Tablero,
 } from './tablero'
+
+describe('tableroDeEjemplo', () => {
+  it('reparte los seis Pendientes de la Especificación en las tres Etapas de partida', () => {
+    const resumen = tableroDeEjemplo().etapas.map((etapa) => [
+      etapa.nombre,
+      etapa.pendientes.map((pendiente) => pendiente.titulo),
+    ])
+
+    expect(resumen).toEqual([
+      [
+        'Por hacer',
+        ['Arrástrame a «En curso»', 'Ábreme para ver mi nota', 'Añade tu primer Pendiente'],
+      ],
+      ['En curso', ['Adapta las Etapas a tu forma de trabajar', 'Guarda una Copia de seguridad']],
+      ['Hecho', ['Abrir el Tablero por primera vez']],
+    ])
+  })
+
+  it('cumple las reglas del Tablero, con al menos dos Etiquetas distintas', () => {
+    const tablero = tableroDeEjemplo()
+    const pendientes = tablero.etapas.flatMap((etapa) => etapa.pendientes)
+    const etiquetas = new Set(pendientes.map((pendiente) => pendiente.etiqueta).filter(Boolean))
+
+    expect(esTablero(tablero)).toBe(true)
+    expect(etiquetas.size).toBeGreaterThanOrEqual(2)
+  })
+
+  it('solo el Pendiente terminado va sin nota', () => {
+    const sinNota = tableroDeEjemplo()
+      .etapas.flatMap((etapa) => etapa.pendientes)
+      .filter((pendiente) => !pendiente.nota)
+
+    expect(sinNota.map((pendiente) => pendiente.titulo)).toEqual([
+      'Abrir el Tablero por primera vez',
+    ])
+  })
+
+  it('las notas enseñan cada gesto', () => {
+    const notaDe = (titulo: string) =>
+      tableroDeEjemplo()
+        .etapas.flatMap((etapa) => etapa.pendientes)
+        .find((pendiente) => pendiente.titulo === titulo)!.nota
+
+    expect(notaDe('Arrástrame a «En curso»')).toMatch(/mantén pulsado.*Mover a/is)
+    expect(notaDe('Ábreme para ver mi nota')).toMatch(/nota.*Etiqueta/is)
+    expect(notaDe('Añade tu primer Pendiente')).toMatch(/Añadir Pendiente.*Vaciar/is)
+    expect(notaDe('Adapta las Etapas a tu forma de trabajar')).toMatch(
+      /renombrarla.*Añadir Etapa.*menú.*asa/is,
+    )
+    expect(notaDe('Guarda una Copia de seguridad')).toMatch(/este navegador.*Exportar/is)
+  })
+
+  it('devuelve un Tablero nuevo cada vez', () => {
+    expect(tableroDeEjemplo()).not.toBe(tableroDeEjemplo())
+    expect(tableroDeEjemplo().etapas[0]).not.toBe(tableroDeEjemplo().etapas[0])
+  })
+})
+
+describe('vaciarTablero', () => {
+  it('quita los Pendientes y conserva las Etapas tal como estén', () => {
+    const adaptado = moverEtapa(renombrarEtapa(tableroDeEjemplo(), 'hecho', 'Listo'), 'hecho', 0)
+
+    const resumen = vaciarTablero(adaptado).etapas.map(({ id, nombre, pendientes }) => ({
+      id,
+      nombre,
+      pendientes,
+    }))
+
+    expect(resumen).toEqual([
+      { id: 'hecho', nombre: 'Listo', pendientes: [] },
+      { id: 'por-hacer', nombre: 'Por hacer', pendientes: [] },
+      { id: 'en-curso', nombre: 'En curso', pendientes: [] },
+    ])
+  })
+
+  it('con el Tablero ya vacío devuelve el mismo Tablero', () => {
+    const vacio = tableroDePartida()
+
+    expect(vaciarTablero(vacio)).toBe(vacio)
+  })
+})
+
+describe('contarPendientes', () => {
+  it('cuenta los Pendientes de todas las Etapas', () => {
+    expect(contarPendientes(tableroDePartida())).toBe(0)
+    expect(contarPendientes(tableroDeEjemplo())).toBe(6)
+  })
+})
 
 describe('tableroDePartida', () => {
   it('trae las tres Etapas de partida en orden', () => {

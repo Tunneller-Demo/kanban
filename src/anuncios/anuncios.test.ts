@@ -18,6 +18,8 @@ import {
   anuncioPendienteCreado,
   anuncioPendienteMovido,
   anuncioPendienteRestaurado,
+  anuncioTableroVaciado,
+  textoDeConfirmacionDeVaciar,
   anuncioPendienteSinMover,
   anuncioPendienteSobre,
   anuncioTituloDemasiadoLargo,
@@ -162,6 +164,22 @@ describe('textos de los límites de Etapas', () => {
   it('los motivos citan los límites del Modelo', () => {
     expect(MOTIVO_SIN_BORRAR_ETAPA).toBe('El Tablero necesita al menos 1 Etapa')
     expect(MOTIVO_SIN_ANADIR_ETAPA).toBe('El Tablero admite hasta 8 Etapas')
+  })
+})
+
+describe('textos de Vaciar', () => {
+  it('anuncia cuántos Pendientes quitó', () => {
+    expect(anuncioTableroVaciado(1)).toBe('Tablero vaciado. 1 Pendiente quitado')
+    expect(anuncioTableroVaciado(6)).toBe('Tablero vaciado. 6 Pendientes quitados')
+  })
+
+  it('la confirmación dice qué se pierde y qué se conserva', () => {
+    expect(textoDeConfirmacionDeVaciar(1)).toBe(
+      'Se borrará 1 Pendiente y no se podrá deshacer. Las Etapas se conservan.',
+    )
+    expect(textoDeConfirmacionDeVaciar(3)).toBe(
+      'Se borrarán 3 Pendientes y no se podrá deshacer. Las Etapas se conservan.',
+    )
   })
 })
 

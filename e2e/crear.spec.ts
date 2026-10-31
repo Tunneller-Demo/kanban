@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { abrirTableroVacio } from './ayudas'
 
 const abrirCampo = async (page: Page, etapa: string) => {
   await page.getByRole('button', { name: `Añadir Pendiente a ${etapa}` }).click()
@@ -9,7 +10,7 @@ const pendientes = (page: Page, etapa: string) =>
   page.getByRole('region', { name: etapa }).getByRole('listitem')
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/kanban/')
+  await abrirTableroVacio(page)
 })
 
 test('Enter crea arriba de la Etapa y deja el campo listo', async ({ page }) => {
@@ -124,6 +125,7 @@ test('lo pegado de más no se corta y no se crea hasta corregirlo', async ({ pag
 })
 
 test('anuncia el resultado de crear', async ({ page }) => {
+  await page.reload()
   const estado = page.getByRole('status')
   await expect(estado).toHaveAttribute('aria-live', 'polite')
   await expect(estado).toBeEmpty()

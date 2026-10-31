@@ -20,6 +20,14 @@ export const MOTIVO_SIN_BORRAR_ETAPA = `El Tablero necesita al menos ${MINIMO_DE
 
 export const MOTIVO_SIN_ANADIR_ETAPA = `El Tablero admite hasta ${MAXIMO_DE_ETAPAS} Etapas`
 
+export const MOTIVO_SIN_VACIAR = 'El Tablero ya está vacío'
+
+export const AVISO_EJEMPLO_ABIERTO = 'Tablero de ejemplo abierto'
+
+export const ANUNCIO_EJEMPLO_ABIERTO = `${AVISO_EJEMPLO_ABIERTO}. Deshacer disponible`
+
+export const ANUNCIO_TABLERO_VACIO_RECUPERADO = 'Tablero vacío recuperado'
+
 const NOMBRES_DE_ETIQUETA: Record<Etiqueta, { nombre: string; adjetivo: string }> = {
   rojo: { nombre: 'Rojo', adjetivo: 'roja' },
   naranja: { nombre: 'Naranja', adjetivo: 'naranja' },
@@ -158,6 +166,16 @@ export function anuncioEtapaRestaurada(nombre: string, posicion: number, total: 
 
 export function textoDeConfirmacionDeEtapa(pendientes: number): string {
   return `${pendientes === 1 ? 'Se borrará' : 'Se borrarán'} ${textoDePendientes(pendientes)}.`
+}
+
+export function anuncioTableroVaciado(pendientes: number): string {
+  const quitados = pendientes === 1 ? 'quitado' : 'quitados'
+  return `Tablero vaciado. ${textoDePendientes(pendientes)} ${quitados}`
+}
+
+export function textoDeConfirmacionDeVaciar(pendientes: number): string {
+  const seBorraran = pendientes === 1 ? 'Se borrará' : 'Se borrarán'
+  return `${seBorraran} ${textoDePendientes(pendientes)} y no se podrá deshacer. Las Etapas se conservan.`
 }
 
 function textoDePendientes(total: number): string {

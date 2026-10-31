@@ -50,6 +50,76 @@ export function tableroDePartida(): Tablero {
   }
 }
 
+// Las notas enseñan los gestos de la app: si cambia uno, cambia su nota.
+export function tableroDeEjemplo(): Tablero {
+  return {
+    etapas: [
+      {
+        id: 'por-hacer',
+        nombre: 'Por hacer',
+        pendientes: [
+          {
+            id: 'ejemplo-arrastrame',
+            titulo: 'Arrástrame a «En curso»',
+            nota: 'Arrastra este Pendiente hasta la Etapa «En curso». En el móvil, mantén pulsado antes de moverlo. Si prefieres no arrastrar, usa «Mover a» en su menú.',
+          },
+          {
+            id: 'ejemplo-abreme',
+            titulo: 'Ábreme para ver mi nota',
+            nota: 'Aquí puedes cambiar el título, escribir una nota y poner una Etiqueta de color. Los cambios se guardan solos.',
+            etiqueta: 'azul',
+          },
+          {
+            id: 'ejemplo-anade',
+            titulo: 'Añade tu primer Pendiente',
+            nota: 'Pulsa «Añadir Pendiente» en cualquier Etapa, escribe el título y pulsa Intro. Cuando acabes de probar, «Vaciar» deja el Tablero limpio y conserva las Etapas.',
+          },
+        ],
+      },
+      {
+        id: 'en-curso',
+        nombre: 'En curso',
+        pendientes: [
+          {
+            id: 'ejemplo-adapta',
+            titulo: 'Adapta las Etapas a tu forma de trabajar',
+            nota: 'Pulsa el nombre de una Etapa para renombrarla. Añade otra con «Añadir Etapa», bórrala desde su menú y reordénalas arrastrando su asa.',
+            etiqueta: 'violeta',
+          },
+          {
+            id: 'ejemplo-guarda',
+            titulo: 'Guarda una Copia de seguridad',
+            nota: 'Tus datos se guardan solo en este navegador: si borras sus datos, se pierden. Para conservarlos, usa «Exportar» en la Copia de seguridad, al pie de la página.',
+            etiqueta: 'naranja',
+          },
+        ],
+      },
+      {
+        id: 'hecho',
+        nombre: 'Hecho',
+        pendientes: [
+          {
+            id: 'ejemplo-abrir',
+            titulo: 'Abrir el Tablero por primera vez',
+            etiqueta: 'verde',
+          },
+        ],
+      },
+    ],
+  }
+}
+
+// Conserva las Etapas. Sin Pendientes que quitar, devuelve el mismo Tablero.
+export function vaciarTablero(tablero: Tablero): Tablero {
+  if (contarPendientes(tablero) === 0) return tablero
+
+  return { etapas: tablero.etapas.map((etapa) => ({ ...etapa, pendientes: [] })) }
+}
+
+export function contarPendientes(tablero: Tablero): number {
+  return tablero.etapas.reduce((total, etapa) => total + etapa.pendientes.length, 0)
+}
+
 // Si el título no vale o la Etapa no existe, devuelve el mismo Tablero.
 export function crearPendiente(
   tablero: Tablero,

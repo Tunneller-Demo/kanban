@@ -92,6 +92,31 @@ test.describe('en estrecho', () => {
       await expect(etapa(page, 'Por hacer').getByRole('heading')).toBeInViewport()
       await expect(pendiente(page, 'Pendiente 1')).toBeInViewport()
     })
+
+    test('la lista deja pasar al carrusel el deslizamiento en horizontal', async ({
+      page,
+      browserName,
+    }) => {
+      test.skip(browserName === 'webkit', 'El WebKit de Playwright en Windows no expone la propiedad')
+      await crear(page, 'Por hacer', 'Comprar pan')
+
+      await expect(etapa(page, 'Por hacer').getByRole('list')).toHaveCSS(
+        'overscroll-behavior-x',
+        'auto',
+      )
+    })
+
+    test('el encaje se apaga mientras se arrastra y vuelve al soltar', async ({ page }) => {
+      await crear(page, 'Por hacer', 'Comprar pan')
+      await pendiente(page, 'Comprar pan').focus()
+
+      await page.keyboard.press('Space')
+      await expect(page.getByRole('status')).toHaveText(/cogido/)
+      await expect(carrusel(page)).toHaveCSS('scroll-snap-type', 'none')
+
+      await page.keyboard.press('Space')
+      await expect(carrusel(page)).toHaveCSS('scroll-snap-type', /x mandatory/)
+    })
   })
 
   test.describe('pestañas', () => {

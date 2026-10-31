@@ -109,6 +109,24 @@ test.describe('con ratón', () => {
     await expect(pendiente(page, 'Comprar pan')).toBeFocused()
   })
 
+  test('sin animaciones sigue al puntero y soltar es instantáneo', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await crear(page, 'Por hacer', 'Segundo', 'Primero')
+    const inicio = (await pendiente(page, 'Primero').boundingBox())!
+    const { x, y } = await centro(pendiente(page, 'Primero'))
+
+    await coger(page, pendiente(page, 'Primero'))
+    await llevar(page, { x, y: y + 40 })
+
+    const arrastrado = page.locator('[data-dnd-dragging]')
+    expect(Math.abs((await arrastrado.boundingBox())!.y - inicio.y - 40)).toBeLessThan(5)
+
+    await page.mouse.up()
+
+    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0)
+    await expect(arrastrado).toHaveCount(0)
+  })
+
   test('acepta una Etapa vacía como destino', async ({ page }) => {
     await crear(page, 'Por hacer', 'Comprar pan')
 
